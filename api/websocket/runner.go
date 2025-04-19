@@ -2,13 +2,12 @@ package websocket
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"github.com/creack/pty"
 	"io"
 	"os/exec"
-	"strings"
 )
-
-// TODO: Change all this to use some kind of terminal instead
 
 type Runner struct {
 	Command []string
@@ -18,33 +17,24 @@ type Runner struct {
 
 func (r *Runner) Run() {
 	defer func() {
-		if rec := recover(); rec != nil {
-			println("[WS] Recovered from panic while running command '" +
-				strings.Join(r.Command, " ") +
-				"':")
-
-			println(rec)
-
-			ConnectionManager.Broadcast(r.TaskId, "error running command")
-		}
+		//if rec := recover(); rec != nil {
+		//	println("[WS] Recovered from panic while running command '" +
+		//		strings.Join(r.Command, " ") +
+		//		"':")
+		//
+		//	println(rec)
+		//
+		//	ConnectionManager.Broadcast(r.TaskId, "error running command")
+		//}
 	}()
 	cmd := exec.CommandContext(r.Ctx, r.Command[0], r.Command[1:]...)
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
-	}
-	stderr, err := cmd.StderrPipe()
+	f, err := pty.Start(cmd)
 	if err != nil {
 		panic(err)
 	}
 
-	if err := cmd.Start(); err != nil {
-		panic(err)
-	}
-
-	go streamOutput(r.TaskId, stdout)
-	go streamOutput(r.TaskId, stderr)
+	go streamOutput(r.TaskId, f)
 
 	if err := cmd.Wait(); err == nil {
 		ConnectionManager.Broadcast(r.TaskId, "command finished")
@@ -55,8 +45,27 @@ func (r *Runner) Run() {
 
 func streamOutput(taskId string, reader io.Reader) {
 	scanner := bufio.NewScanner(reader)
+	scanner.Split(splitterFunc)
+
 	for scanner.Scan() {
-		message := scanner.Text()
-		ConnectionManager.Broadcast(taskId, message)
+		text := scanner.Text()
+		ConnectionManager.Broadcast(taskId, text)
 	}
+}
+
+func splitterFunc(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if len(data) == 0 {
+		return 0, nil, nil
+	}
+
+	for i, b := range data {
+		if b == '\r' {
+			return i + 1, data[:i], nil
+		}
+	}
+	if atEOF {
+		return len(data), bytes.TrimSpace(data), nil
+	}
+
+	return 0, nil, nil
 }
