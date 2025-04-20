@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
+	"sync"
+	"time"
 )
 
 func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
@@ -28,8 +30,9 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 	envName, ok1 := msg["Environment"].(string)
 	objectType, ok2 := msg["Object"].(string)
 	action, ok3 := msg["Action"].(string)
+	actionId, ok4 := msg["ActionId"].(string)
 
-	if !ok1 || !ok2 || !ok3 {
+	if !ok1 || !ok2 || !ok3 || !ok4 {
 		log.Println("[WS] Invalid message format")
 		return
 	}
@@ -44,11 +47,29 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 
 	ctx, _ := context.WithCancel(context.Background())
 
-	runner := Runner{
-		Command: []string{"docker", "pull", "linuxserver/apprise-api"},
-		TaskId:  "test-task",
-		Ctx:     ctx,
+	actionObj := Action{
+		Environment:   envName,
+		Object:        objectType,
+		Action:        action,
+		ObjectId:      "",
+		ActionId:      actionId,
+		InitializedBy: ConnectionManager.GetConnectionId(conn),
+		StartedAt:     time.Now(),
+		FinishedAt:    time.Time{},
+		Status:        Pending,
+		Output:        "",
+		ctx:           ctx,
+		Mutex:         sync.RWMutex{},
 	}
+
+	runner := Runner{
+		Command:  []string{"docker", "pull", "ghcr.io/linuxserver/calibre-web"},
+		ActionId: actionObj.ActionId,
+		Action:   &actionObj,
+		Ctx:      ctx,
+	}
+
+	ActionManager.createAction(&runner, &actionObj)
 
 	go runner.Run()
 }

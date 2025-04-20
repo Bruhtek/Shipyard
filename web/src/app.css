@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import "./css/reset.css";
+
+:root {
+	/** Base colors */
+	--dark-a0: #000000;
+	--light-a0: #ffffff;
+
+	/** Dark theme primary colors */
+	--primary-a0: #4f2eb3;
+	--primary-a10: #6644bc;
+	--primary-a20: #7c5ac5;
+	--primary-a30: #9071ce;
+	--primary-a40: #a387d6;
+	--primary-a50: #b69edf;
+
+	--red-a0: #b32e4f;
+	--red-a10: #be4a60;
+	--red-a20: #c96272;
+	--red-a30: #d37985;
+	--red-a40: #dc8f98;
+	--red-a50: #e4a6ac;
+
+	--green-a0: #2eb392;
+	--green-a10: #50bc9e;
+	--green-a20: #6ac4a9;
+	--green-a30: #82cdb5;
+	--green-a40: #98d6c1;
+	--green-a50: #addecd;
+
+	--yellow-a0: #b3922e;
+	--yellow-a10: #bd9d47;
+	--yellow-a20: #c6a95e;
+	--yellow-a30: #cfb575;
+	--yellow-a40: #d8c18b;
+	--yellow-a50: #e1cda2;
+
+	/** Dark theme surface colors */
+	--surface-a0: #151515;
+	--surface-a10: #2a2a2a;
+	--surface-a20: #414141;
+	--surface-a30: #595959;
+	--surface-a40: #727272;
+	--surface-a50: #8d8d8d;
+
+	/** Dark theme tonal surface colors */
+	--surface-tonal-a0: #1c1823;
+	--surface-tonal-a10: #312d38;
+	--surface-tonal-a20: #47444d;
+	--surface-tonal-a30: #5f5b64;
+	--surface-tonal-a40: #78757c;
+	--surface-tonal-a50: #918f95;
+}
+
+body {
+	font-family: 'Inter', sans-serif;
+	background-color: var(--surface-tonal-a0);
+	color: var(--light-a0);
+}

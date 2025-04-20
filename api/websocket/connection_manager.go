@@ -26,6 +26,28 @@ func newConnectionManager() *CMStruct {
 	}
 }
 
+func (m *CMStruct) GetConnection(id string) *websocket.Conn {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+
+	for conn, data := range m.connections {
+		if data.id == id {
+			return conn
+		}
+	}
+	return nil
+}
+
+func (m *CMStruct) GetConnectionId(conn *websocket.Conn) string {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+
+	if data, ok := m.connections[conn]; ok {
+		return data.id
+	}
+	return ""
+}
+
 func (m *CMStruct) ConnectionCount() int {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -77,19 +99,19 @@ func (m *CMStruct) RemoveConnection(conn *websocket.Conn) {
 	delete(m.connections, conn)
 }
 
-func (m *CMStruct) Broadcast(taskId string, message interface{}) {
-	m.mutex.RLock()
-	defer m.mutex.RUnlock()
+func (m *CMStruct) Broadcast(actionId string, message interface{}) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 
 	for conn := range m.connections {
 		type TaskMessage struct {
-			TaskId  string
-			Message interface{}
+			ActionId string
+			Message  interface{}
 		}
 
 		taskMessage := TaskMessage{
-			TaskId:  taskId,
-			Message: message,
+			ActionId: actionId,
+			Message:  message,
 		}
 
 		message, err := json.Marshal(taskMessage)
