@@ -126,3 +126,31 @@ func (m *CMStruct) Broadcast(actionId string, message interface{}) {
 		}
 	}
 }
+
+func (m *CMStruct) BroadcastMetadata(actionId string, metadata interface{}) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	for conn := range m.connections {
+		type ActionMetadata struct {
+			ActionId string
+			Metadata interface{}
+		}
+
+		actionMetadata := ActionMetadata{
+			ActionId: actionId,
+			Metadata: metadata,
+		}
+
+		message, err := json.Marshal(actionMetadata)
+		if err != nil {
+			log.Println("Error marshalling message:", err)
+			break
+		}
+
+		err = conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			m.RemoveConnection(conn)
+		}
+	}
+}

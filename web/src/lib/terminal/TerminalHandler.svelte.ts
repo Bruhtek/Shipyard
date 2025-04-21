@@ -1,21 +1,55 @@
 import type { Action } from 'svelte/action';
 import { dev } from '$app/environment';
+import { actionsList } from '$lib/types/Action';
+import TerminalStore from '$lib/terminal/TerminalStore.svelte';
 
 const terminalHandler: Action<HTMLElement> = () => {
-	$effect(() => {
-		async function main() {
-			const url = dev ? 'localhost:4000' : window.location.host;
+	let intervalRef: number | null = null;
 
-			const res = await fetch(window.location.protocol + "//" + url + "/api/actions")
+	async function main() {
+		console.log("Refreshing actions...")
 
-			if (!res.ok) {
-				console.error('Failed to fetch actions');
-				return;
-			}
+		const url = dev ? 'localhost:4000' : window.location.host;
+
+		const res = await fetch(window.location.protocol + "//" + url + "/api/actions")
+
+		if (!res.ok) {
+			console.error('Failed to fetch actions');
+			return;
 		}
 
-		main();
+		const data = actionsList.parse(await res.json());
+		const keys = Object.keys(data.Actions);
+
+		TerminalStore.filterTerminalsById(keys)
+
+		const existingIds = TerminalStore.getTerminalIds()
+		const newIds = keys.filter((id) => !existingIds.includes(id));
+
+		for (const id of newIds) {
+			const action = data.Actions[id];
+
+			TerminalStore.addTerminal(action)
+		}
+	}
+
+	main().catch((err) => {
+		console.error('Error while refreshing actions:', err);
 	});
+
+	intervalRef = setInterval(() => {
+		main().catch((err) => {
+			console.error('Error while refreshing actions:', err);
+		});
+	}, 10 * 1000)
+
+	return {
+		destroy() {
+			if (intervalRef) {
+				clearInterval(intervalRef);
+			}
+		}
+	};
 }
 
 export default terminalHandler;

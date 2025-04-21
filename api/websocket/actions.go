@@ -23,14 +23,14 @@ type Action struct {
 	Output string
 	ctx    context.Context
 
-	Mutex sync.RWMutex
+	Mutex sync.RWMutex `json:"-"`
 }
 
 type ActionStatus int
 
 const (
-	Pending ActionStatus = iota
-	Running ActionStatus = iota
-	Success ActionStatus = iota
-	Failed  ActionStatus = iota
+	Pending ActionStatus = 0
+	Running ActionStatus = 1
+	Success ActionStatus = 2
+	Failed  ActionStatus = 3
 )

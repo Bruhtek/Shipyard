@@ -32,10 +32,16 @@ func (r *Runner) Run() {
 	}()
 	cmd := exec.CommandContext(r.Ctx, r.Command[0], r.Command[1:]...)
 
+	ConnectionManager.BroadcastMetadata(r.ActionId, r.Action)
+
 	f, err := pty.Start(cmd)
 	if err != nil {
 		panic(err)
 	}
+
+	r.Action.Mutex.Lock()
+	r.Action.Status = Running
+	r.Action.Mutex.Unlock()
 
 	go streamOutput(r.ActionId, r.Action, f)
 
@@ -47,8 +53,7 @@ func (r *Runner) Run() {
 		r.Action.FinishedAt = time.Now()
 		r.Action.Mutex.Unlock()
 
-		// TODO: URGENT - Change this
-		go ActionManager.DeleteFinishedAction(r.Action, time.Hour*10)
+		go ActionManager.DeleteFinishedAction(r.Action, time.Second*30)
 	} else {
 		ConnectionManager.Broadcast(r.ActionId, "\r\n\n\nCommand finished with error\r\n")
 

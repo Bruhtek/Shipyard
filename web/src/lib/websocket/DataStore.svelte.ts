@@ -1,19 +1,12 @@
 import { nanoid } from 'nanoid';
-import { z } from 'zod';
 import TerminalStore from '$lib/terminal/TerminalStore.svelte';
-
-const MESSAGE_LIMIT = 100;
+import { actionMessage, actionMessageMetadata } from '$lib/types/Action';
 
 export enum ConnectionStatus {
 	DISCONNECTED = 0,
 	CONNECTED = 1,
-	RECONNECTING = 2,
+	RECONNECTING = 2
 }
-
-const actionMessage = z.object({
-	ActionId: z.string(),
-	Message: z.string(),
-})
 
 class DataStore {
 	messages: string[] = $state<string[]>([]);
@@ -37,18 +30,29 @@ class DataStore {
 	}
 
 	addMessage(message: string) {
-		console.debug('Adding message', message);
+		// console.debug('Adding message', message);
 
 		try {
 			const json = JSON.parse(message);
-			try {
-				const parsedMessage = actionMessage.parse(json);
+			if (!json.ActionId) {
+				return;
+			}
 
-				TerminalStore.addMessage(parsedMessage.ActionId, parsedMessage.Message + '\r');
+			try {
+				if (json.Message) {
+					const parsedMessage = actionMessage.parse(json);
+
+					TerminalStore.addMessage(parsedMessage.ActionId, parsedMessage.Message + '\r');
+				} else if (json.Metadata) {
+					const metadata = actionMessageMetadata.parse(json);
+
+					console.log(metadata);
+					TerminalStore.addTerminal(metadata);
+				}
 			} catch (e) {
 				console.error('Failed to add message', e);
 			}
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		} catch (_) {
 			// silently ignore
 		}
@@ -66,11 +70,11 @@ class DataStore {
 		const actionId = nanoid();
 
 		const data = {
-			"Environment": env,
-			"Object": object,
-			"Action": action,
-			"ActionId": actionId,
-		}
+			Environment: env,
+			Object: object,
+			Action: action,
+			ActionId: actionId
+		};
 
 		this._sendMessage(data);
 	}
