@@ -18,8 +18,8 @@ export type Terminal = {
 	Status: number;
 }
 
-export const terminalStatus = (t: Terminal) => {
-	switch (t.Status) {
+export const terminalStatus = (id: number) => {
+	switch (id) {
 		case 0:
 			return 'Pending';
 		case 1:
@@ -33,10 +33,15 @@ export const terminalStatus = (t: Terminal) => {
 	}
 }
 
+type Subscription = {
+	onData: (message: string) => void;
+	onMetadata: (metadata: Terminal) => void;
+}
+
 class terminalStore {
 	// essentially just map Terminal(action) id to output
 	terminals: Terminal[] = $state<Terminal[]>([]);
-	subscriptions: { [key: string]: ((message: string) => void)[] } = {};
+	subscriptions: { [key: string]: Subscription[] } = {};
 
 	addMessage(id: string, message: string) {
 		// console.debug('Adding message', message);
@@ -60,14 +65,14 @@ class terminalStore {
 
 		// Notify subscribers
 		if (this.subscriptions[id]) {
-			this.subscriptions[id].forEach(callback => callback(message));
+			this.subscriptions[id].forEach(sub => sub.onData(message));
 		}
 	}
 
 	addTerminal(metadata: ActionMetadata) {
 		const id = metadata.ActionId;
 
-		const t = this.terminals.find(t => t.id === id);
+		let t = this.terminals.find(t => t.id === id);
 		if(t) {
 			t.Action = metadata.Action;
 			t.Environment = metadata.Environment;
@@ -81,7 +86,7 @@ class terminalStore {
 				t.content = metadata.Output || '';
 			}
 		} else {
-			this.terminals.push({
+			t = {
 				id,
 				content: metadata.Output || '',
 				Action: metadata.Action,
@@ -91,7 +96,12 @@ class terminalStore {
 				FinishedAt: dayjs(metadata.FinishedAt),
 				StartedAt: dayjs(metadata.StartedAt),
 				Status: metadata.Status,
-			})
+			}
+			this.terminals.push(t)
+		}
+
+		if(this.subscriptions[id]) {
+			this.subscriptions[id].forEach(sub => sub.onMetadata(t));
 		}
 	}
 
@@ -101,23 +111,34 @@ class terminalStore {
 
 	filterTerminalsById (ids: string[]) {
 		this.terminals = this.terminals.filter(t => ids.includes(t.id));
+
+		const subscriptionIds = Object.keys(this.subscriptions);
+		const filteredSubscriptions = subscriptionIds.filter(id => !ids.includes(id));
+
+		filteredSubscriptions.forEach(id => {
+			this.subscriptions[id] = [];
+		})
 	}
 
-	subscribe (id: string, callback: (message: string) => void) {
+	subscribe (id: string, subscription: Subscription) {
 		if (!this.subscriptions[id]) {
 			this.subscriptions[id] = [];
 		}
-		this.subscriptions[id].push(callback);
+		this.subscriptions[id].push(subscription);
 	}
 
-	unsubscribe (id: string, callback: (message: string) => void) {
+	unsubscribe (id: string, subscription: Subscription) {
 		if (this.subscriptions[id]) {
-			this.subscriptions[id] = this.subscriptions[id].filter(cb => cb !== callback);
+			this.subscriptions[id] = this.subscriptions[id].filter(sub => sub !== subscription);
 		}
 	}
 
 	get terms () {
 		return this.terminals;
+	}
+
+	getTerminal(id: string) {
+		return this.terminals.find(t => t.id === id);
 	}
 }
 

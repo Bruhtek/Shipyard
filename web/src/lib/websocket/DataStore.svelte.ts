@@ -47,7 +47,7 @@ class DataStore {
 					const metadata = actionMessageMetadata.parse(json);
 
 					console.log(metadata);
-					TerminalStore.addTerminal(metadata);
+					TerminalStore.addTerminal(metadata.Metadata);
 				}
 			} catch (e) {
 				console.error('Failed to add message', e);

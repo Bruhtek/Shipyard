@@ -43,6 +43,8 @@ func (r *Runner) Run() {
 	r.Action.Status = Running
 	r.Action.Mutex.Unlock()
 
+	ConnectionManager.BroadcastMetadata(r.ActionId, r.Action)
+
 	go streamOutput(r.ActionId, r.Action, f)
 
 	if err := cmd.Wait(); err == nil {
@@ -53,7 +55,7 @@ func (r *Runner) Run() {
 		r.Action.FinishedAt = time.Now()
 		r.Action.Mutex.Unlock()
 
-		go ActionManager.DeleteFinishedAction(r.Action, time.Second*30)
+		go ActionManager.DeleteFinishedAction(r.Action, time.Second*10)
 	} else {
 		ConnectionManager.Broadcast(r.ActionId, "\r\n\n\nCommand finished with error\r\n")
 
@@ -62,6 +64,8 @@ func (r *Runner) Run() {
 		r.Action.FinishedAt = time.Now()
 		r.Action.Mutex.Unlock()
 	}
+
+	ConnectionManager.BroadcastMetadata(r.ActionId, r.Action)
 
 	r.Action.Mutex.Lock()
 	// remove the last \r from the output

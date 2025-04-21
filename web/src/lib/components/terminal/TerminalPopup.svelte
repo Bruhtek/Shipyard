@@ -3,22 +3,28 @@
 	import TerminalContainer from '$lib/components/terminal/TerminalContainer.svelte';
 
 	let terminals = $derived(TerminalStore.terms.toSorted((a, b) => {
-				if (a.StartedAt < b.StartedAt) {
-					return -1;
-				} else if (a.StartedAt > b.StartedAt) {
-					return 1;
-				}
-				return 0;
-		})
-	)
+		if (a.StartedAt < b.StartedAt) {
+			return -1;
+		} else if (a.StartedAt > b.StartedAt) {
+			return 1;
+		}
+		return 0;
+	}));
 </script>
 
-<p>hehe</p>
+<div class="container">
+	{#each terminals as t (t.id)}
+		<TerminalContainer
+			content={t.content}
+			id={t.id}
+		/>
+	{/each}
+</div>
 
-{#each terminals as t (t.id)}
-	<TerminalContainer
-		content={t.content}
-		id={t.id}
-		terminal={t}
-	/>
-{/each}
+<style>
+	.container {
+		position: absolute;
+		bottom: 2rem;
+		right: 0;
+	}
+</style>
