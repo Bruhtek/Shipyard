@@ -99,18 +99,20 @@ func (m *CMStruct) RemoveConnection(conn *websocket.Conn) {
 	delete(m.connections, conn)
 }
 
-func (m *CMStruct) Broadcast(actionId string, message interface{}) {
+func (m *CMStruct) BroadcastActionOutput(actionId string, message interface{}) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	for conn := range m.connections {
 		type TaskMessage struct {
 			ActionId string
+			Type     string
 			Message  interface{}
 		}
 
 		taskMessage := TaskMessage{
 			ActionId: actionId,
+			Type:     "ActionOutput",
 			Message:  message,
 		}
 
@@ -127,18 +129,20 @@ func (m *CMStruct) Broadcast(actionId string, message interface{}) {
 	}
 }
 
-func (m *CMStruct) BroadcastMetadata(actionId string, metadata interface{}) {
+func (m *CMStruct) BroadcastActionMetadata(actionId string, metadata interface{}) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	for conn := range m.connections {
 		type ActionMetadata struct {
 			ActionId string
+			Type     string
 			Metadata interface{}
 		}
 
 		actionMetadata := ActionMetadata{
 			ActionId: actionId,
+			Type:     "ActionMetadata",
 			Metadata: metadata,
 		}
 
@@ -149,6 +153,30 @@ func (m *CMStruct) BroadcastMetadata(actionId string, metadata interface{}) {
 		}
 
 		err = conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			m.RemoveConnection(conn)
+		}
+	}
+}
+
+func (m *CMStruct) BroadcastActionMisc(actionId string, messageKey string, message interface{}) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	for conn := range m.connections {
+		messageData := map[string]interface{}{
+			"ActionId": actionId,
+			"Type":     "Action" + messageKey,
+			messageKey: message,
+		}
+
+		msg, err := json.Marshal(messageData)
+		if err != nil {
+			log.Println("Error marshalling message:", err)
+			break
+		}
+
+		err = conn.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			m.RemoveConnection(conn)
 		}

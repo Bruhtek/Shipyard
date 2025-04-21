@@ -1,6 +1,6 @@
 import type { Action } from 'svelte/action';
 import { dev } from '$app/environment';
-import WSDataStore, { ConnectionStatus } from '$lib/websocket/DataStore.svelte';
+import WSDataStore, { ConnectionStatus } from '$lib/websocket/MessageHandler.svelte.js';
 
 const websocketHandler: Action<HTMLElement> = () => {
 	$effect(() => {

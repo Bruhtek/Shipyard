@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export type ActionStatus = "Pending" | "Running" | "Success" | "Failed" | "Unknown";
+
 export const actionMetadata = z.object({
 	// command details
 	ActionId: z.string().nonempty(),
@@ -13,16 +15,25 @@ export const actionMetadata = z.object({
 	Status: z.number().int().min(0).max(3),
 
 	Output: z.string().optional(),
+});
+
+const actionMessageBase = z.object({
+	ActionId: z.string(),
+	Type: z.string().startsWith("Action")
 })
 
 export const actionMessage = z.object({
-	ActionId: z.string(),
 	Message: z.string()
-});
+}).merge(actionMessageBase);
+
 export const actionMessageMetadata = z.object({
-	ActionId: z.string(),
 	Metadata: actionMetadata
-});
+}).merge(actionMessageBase);
+
+export const actionRemovedMessage = z.object({
+	Removed: z.boolean()
+}).merge(actionMessageBase);
+
 export type ActionMetadata = z.infer<typeof actionMetadata>;
 
 export const actionsList = z.object({

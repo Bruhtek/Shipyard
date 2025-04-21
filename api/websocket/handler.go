@@ -31,8 +31,9 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 	objectType, ok2 := msg["Object"].(string)
 	action, ok3 := msg["Action"].(string)
 	actionId, ok4 := msg["ActionId"].(string)
+	objectId, ok5 := msg["ObjectId"].(string)
 
-	if !ok1 || !ok2 || !ok3 || !ok4 {
+	if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
 		log.Println("[WS] Invalid message format")
 		return
 	}
@@ -51,7 +52,7 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 		Environment:   envName,
 		Object:        objectType,
 		Action:        action,
-		ObjectId:      "",
+		ObjectId:      objectId,
 		ActionId:      actionId,
 		InitializedBy: ConnectionManager.GetConnectionId(conn),
 		StartedAt:     time.Now(),
@@ -62,8 +63,14 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 		Mutex:         sync.RWMutex{},
 	}
 
+	cmd := GetDockerCommand(objectType, action, objectId)
+	if len(cmd) == 0 {
+		log.Println("[WS] Invalid command:", objectType, action, objectId)
+		return
+	}
+
 	runner := Runner{
-		Command:  []string{"docker", "pull", "ghcr.io/linuxserver/calibre-web"},
+		Command:  cmd,
 		ActionId: actionObj.ActionId,
 		Action:   &actionObj,
 		Ctx:      ctx,

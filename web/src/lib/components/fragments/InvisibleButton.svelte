@@ -1,14 +1,12 @@
 <script lang="ts">
-
   	import type { Snippet } from 'svelte';
-		import type { HTMLButtonAttributes } from 'svelte/elements';
+	import type { HTMLButtonAttributes } from 'svelte/elements';
 
 	type Props = {
 		children: Snippet<[]>;
 	} & HTMLButtonAttributes;
 
 	let { children, ...rest }: Props = $props();
-
 </script>
 
 
@@ -21,6 +19,9 @@
 
 <style>
 	.invisible-button {
+		display: flex;
+		width: 100%;
+		gap: 0.5rem;
 		background: none;
 		border: none;
 		padding: 0;

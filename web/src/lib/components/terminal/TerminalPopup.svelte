@@ -26,5 +26,9 @@
 		position: absolute;
 		bottom: 2rem;
 		right: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0.5rem;
 	}
 </style>

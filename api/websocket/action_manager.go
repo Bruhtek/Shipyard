@@ -64,6 +64,8 @@ func (am *AMStruct) DeleteFinishedAction(action *Action, delay time.Duration) {
 
 	action.Mutex.Lock()
 
+	ConnectionManager.BroadcastActionMisc(action.ActionId, "Removed", true)
+
 	am.actions[action.ActionId] = nil
 	delete(am.actions, action.ActionId)
 }

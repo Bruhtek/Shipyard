@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid';
-import TerminalStore from '$lib/terminal/TerminalStore.svelte';
-import { actionMessage, actionMessageMetadata } from '$lib/types/Action';
+import handleMessage from '$lib/websocket/handles';
 
 export enum ConnectionStatus {
 	DISCONNECTED = 0,
@@ -8,8 +7,7 @@ export enum ConnectionStatus {
 	RECONNECTING = 2
 }
 
-class DataStore {
-	messages: string[] = $state<string[]>([]);
+class MessageHandler {
 	connectionStatus: ConnectionStatus = $state<ConnectionStatus>(0);
 	_sendMessage: ((data: object) => void) | null = null;
 
@@ -18,7 +16,6 @@ class DataStore {
 	}
 
 	constructor() {
-		this.messages = [];
 		this.connectionStatus = 0;
 
 		// if, after 5 seconds, we are still disconnected, change the status to show it to the user
@@ -30,29 +27,18 @@ class DataStore {
 	}
 
 	addMessage(message: string) {
-		// console.debug('Adding message', message);
-
 		try {
 			const json = JSON.parse(message);
-			if (!json.ActionId) {
+			if (!json.Type) {
 				return;
 			}
 
 			try {
-				if (json.Message) {
-					const parsedMessage = actionMessage.parse(json);
-
-					TerminalStore.addMessage(parsedMessage.ActionId, parsedMessage.Message + '\r');
-				} else if (json.Metadata) {
-					const metadata = actionMessageMetadata.parse(json);
-
-					console.log(metadata);
-					TerminalStore.addTerminal(metadata.Metadata);
-				}
+				handleMessage(json);
 			} catch (e) {
-				console.error('Failed to add message', e);
+				console.error('Failed to handle message', e);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		} catch (_) {
 			// silently ignore
 		}
@@ -80,5 +66,5 @@ class DataStore {
 	}
 }
 
-const WSDataStore = new DataStore();
+const WSDataStore = new MessageHandler();
 export default WSDataStore;

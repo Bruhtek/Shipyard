@@ -27,12 +27,12 @@ func (r *Runner) Run() {
 
 			println(rec)
 
-			ConnectionManager.Broadcast(r.ActionId, "\r\n\nError running command\r\n")
+			ConnectionManager.BroadcastActionOutput(r.ActionId, "\r\n\nError running command\r\n")
 		}
 	}()
 	cmd := exec.CommandContext(r.Ctx, r.Command[0], r.Command[1:]...)
 
-	ConnectionManager.BroadcastMetadata(r.ActionId, r.Action)
+	ConnectionManager.BroadcastActionMetadata(r.ActionId, r.Action)
 
 	f, err := pty.Start(cmd)
 	if err != nil {
@@ -43,12 +43,12 @@ func (r *Runner) Run() {
 	r.Action.Status = Running
 	r.Action.Mutex.Unlock()
 
-	ConnectionManager.BroadcastMetadata(r.ActionId, r.Action)
+	ConnectionManager.BroadcastActionMetadata(r.ActionId, r.Action)
 
 	go streamOutput(r.ActionId, r.Action, f)
 
 	if err := cmd.Wait(); err == nil {
-		ConnectionManager.Broadcast(r.ActionId, "\r\n\n\nCommand finished\r\n")
+		ConnectionManager.BroadcastActionOutput(r.ActionId, "\r\n\n\nCommand finished\r\n")
 
 		r.Action.Mutex.Lock()
 		r.Action.Status = Success
@@ -57,7 +57,7 @@ func (r *Runner) Run() {
 
 		go ActionManager.DeleteFinishedAction(r.Action, time.Second*10)
 	} else {
-		ConnectionManager.Broadcast(r.ActionId, "\r\n\n\nCommand finished with error\r\n")
+		ConnectionManager.BroadcastActionOutput(r.ActionId, "\r\n\n\nCommand finished with error\r\n")
 
 		r.Action.Mutex.Lock()
 		r.Action.Status = Failed
@@ -65,7 +65,7 @@ func (r *Runner) Run() {
 		r.Action.Mutex.Unlock()
 	}
 
-	ConnectionManager.BroadcastMetadata(r.ActionId, r.Action)
+	ConnectionManager.BroadcastActionMetadata(r.ActionId, r.Action)
 
 	r.Action.Mutex.Lock()
 	// remove the last \r from the output
@@ -86,7 +86,7 @@ func streamOutput(actionId string, action *Action, reader io.Reader) {
 		action.Output += text + "\r"
 		action.Mutex.Unlock()
 
-		ConnectionManager.Broadcast(actionId, text)
+		ConnectionManager.BroadcastActionOutput(actionId, text)
 	}
 }
 

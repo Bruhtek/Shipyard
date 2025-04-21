@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import type { ActionMetadata } from '$lib/types/Action';
+import type { ActionMetadata, ActionStatus } from '$lib/types/Action';
 
 export type Terminal = {
 	id: string;
@@ -16,9 +16,12 @@ export type Terminal = {
 	StartedAt: dayjs.Dayjs;
 
 	Status: number;
+
+	DoNotDelete?: boolean;
+	MarkedForDeletion?: boolean;
 }
 
-export const terminalStatus = (id: number) => {
+export const terminalStatus = (id: number): ActionStatus => {
 	switch (id) {
 		case 0:
 			return 'Pending';
@@ -35,7 +38,6 @@ export const terminalStatus = (id: number) => {
 
 type Subscription = {
 	onData: (message: string) => void;
-	onMetadata: (metadata: Terminal) => void;
 }
 
 class terminalStore {
@@ -99,21 +101,36 @@ class terminalStore {
 			}
 			this.terminals.push(t)
 		}
-
-		if(this.subscriptions[id]) {
-			this.subscriptions[id].forEach(sub => sub.onMetadata(t));
-		}
 	}
 
 	getTerminalIds () {
 		return this.terminals.map(t => t.id);
 	}
 
+	removeTerminal(id: string) {
+		const index = this.terminals.findIndex(t => t.id === id);
+		if (index !== -1) {
+			if(this.terminals[index].DoNotDelete) {
+				this.terminals[index].MarkedForDeletion = true;
+				return;
+			}
+
+			this.terminals.splice(index, 1);
+		}
+
+		if (this.subscriptions[id]) {
+			delete this.subscriptions[id];
+		}
+	}
+
 	filterTerminalsById (ids: string[]) {
-		this.terminals = this.terminals.filter(t => ids.includes(t.id));
+		this.terminals = this.terminals.filter(t => ids.includes(t.id) || t.DoNotDelete);
 
 		const subscriptionIds = Object.keys(this.subscriptions);
-		const filteredSubscriptions = subscriptionIds.filter(id => !ids.includes(id));
+		const filteredSubscriptions = subscriptionIds.filter(
+			id => !ids.includes(id) &&
+				!this.terminals.find(t => t.id === id)
+		);
 
 		filteredSubscriptions.forEach(id => {
 			this.subscriptions[id] = [];

@@ -7,7 +7,7 @@ const terminalHandler: Action<HTMLElement> = () => {
 	let intervalRef: number | null = null;
 
 	async function main() {
-		console.log("Refreshing actions...")
+		// console.log("Refreshing actions...")
 
 		const url = dev ? 'localhost:4000' : window.location.host;
 

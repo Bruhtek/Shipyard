@@ -1,5 +1,5 @@
 <script lang="ts">
-    import WSDataStore from "$lib/websocket/DataStore.svelte.js";
+    import WSDataStore from "$lib/websocket/MessageHandler.svelte.js";
     import { slide } from 'svelte/transition';
 </script>
 

@@ -53,6 +53,7 @@
 }
 
 body {
+	overflow-x: hidden;
 	font-family: 'Inter', sans-serif;
 	background-color: var(--surface-tonal-a0);
 	color: var(--light-a0);
