@@ -4,6 +4,7 @@ import (
 	"Shipyard/api/actions"
 	"Shipyard/api/env"
 	"Shipyard/api/websocket"
+	"Shipyard/intervals"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
@@ -17,6 +18,8 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
+
+	intervals.SetupIntervals()
 
 	envRouter := env.GetEnvRouter()
 	actionsRouter := actions.GetActionsRouter()

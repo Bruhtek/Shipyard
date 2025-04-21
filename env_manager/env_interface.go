@@ -12,4 +12,5 @@ type EnvInterface interface {
 	ScanContainers()
 	GetContainers() map[string]*docker.Container
 	GetContainer(id string) *docker.Container
+	GetContainerCount() int
 }

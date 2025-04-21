@@ -38,8 +38,8 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 		return
 	}
 
-	_, ok := env_manager.EnvManager.Env[envName]
-	if !ok {
+	env := env_manager.EnvManager.GetEnv(envName)
+	if env == nil {
 		log.Println("[WS] Environment not found:", envName)
 		return
 	}

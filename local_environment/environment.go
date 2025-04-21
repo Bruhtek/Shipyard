@@ -61,6 +61,13 @@ func (e *LocalEnvironment) GetContainer(id string) *docker.Container {
 	return e.containers[id]
 }
 
+func (e *LocalEnvironment) GetContainerCount() int {
+	e.containerMutex.RLock()
+	defer e.containerMutex.RUnlock()
+
+	return len(e.containers)
+}
+
 var LocalEnv *LocalEnvironment = newLocalEnv()
 
 func newLocalEnv() *LocalEnvironment {

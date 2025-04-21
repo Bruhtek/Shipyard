@@ -13,7 +13,7 @@ func EnvironmentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		envName := chi.URLParam(r, "environment")
 
-		if env, ok := env_manager.EnvManager.Env[envName]; ok {
+		if env := env_manager.EnvManager.GetEnv(envName); env != nil {
 			ctx := context.WithValue(r.Context(), "env", env)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -34,7 +34,13 @@ func GetEnvRouter() *chi.Mux {
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				env := r.Context().Value("env").(env_manager.EnvInterface)
 
-				env.ScanContainers()
+				// if we already have containers, do not scan them again.
+				// the intervals package takes care of that
+				// this hugely improves the performance - 2 orders of magnitude faster
+				if env.GetContainerCount() == 0 {
+					env.ScanContainers()
+				}
+
 				containers := env.GetContainers()
 
 				type ContainerList struct {
