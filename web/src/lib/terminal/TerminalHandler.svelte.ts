@@ -1,5 +1,4 @@
 import type { Action } from 'svelte/action';
-import { dev } from '$app/environment';
 import { actionsList } from '$lib/types/Action';
 import TerminalStore from '$lib/terminal/TerminalStore.svelte';
 import { URLPrefix } from '$lib';

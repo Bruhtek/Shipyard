@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"Shipyard/env_manager"
+	"Shipyard/utils"
 	"context"
 	"encoding/json"
 	"github.com/gorilla/websocket"
@@ -30,10 +31,9 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 	envName, ok1 := msg["Environment"].(string)
 	objectType, ok2 := msg["Object"].(string)
 	action, ok3 := msg["Action"].(string)
-	actionId, ok4 := msg["ActionId"].(string)
-	objectId, ok5 := msg["ObjectId"].(string)
+	objectId, ok4 := msg["ObjectId"].(string)
 
-	if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
+	if !ok1 || !ok2 || !ok3 || !ok4 {
 		log.Println("[WS] Invalid message format")
 		return
 	}
@@ -47,6 +47,8 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 	println("[WS] Received message:", objectType, action, envName)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	actionId := utils.RandString(32)
 
 	actionObj := Action{
 		Environment:   envName,

@@ -3,6 +3,7 @@ package local_environment
 import (
 	"Shipyard/docker"
 	"Shipyard/terminals"
+	"Shipyard/utils"
 	"encoding/json"
 	"log"
 	"strings"
@@ -68,9 +69,14 @@ func (e *LocalEnvironment) GetContainerCount() int {
 	return len(e.containers)
 }
 
-var LocalEnv *LocalEnvironment = newLocalEnv()
+func (e *LocalEnvironment) GetEnvDescription() utils.EnvDescription {
+	return utils.EnvDescription{
+		Name:    e.Name,
+		EnvType: e.EnvType,
+	}
+}
 
-func newLocalEnv() *LocalEnvironment {
+func NewLocalEnv() *LocalEnvironment {
 	env := &LocalEnvironment{
 		Name:           "Local",
 		EnvType:        "local",

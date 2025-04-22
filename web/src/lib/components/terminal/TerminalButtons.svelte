@@ -21,6 +21,9 @@
 		TerminalRequests.DismissTerminal(terminal);
 		show = false;
 	}
+	function Stop() {
+		TerminalRequests.DismissTerminal(terminal);
+	}
 </script>
 
 <div
@@ -31,7 +34,7 @@
 		<InvisibleButton
 			center={true}
 			class="btn btn-stop"
-			onclick={Dismiss}
+			onclick={Stop}
 		>
 			<StopCircle width="1.5rem" height="1.5rem" />
 		</InvisibleButton>

@@ -50,6 +50,10 @@
 	--surface-tonal-a30: #5f5b64;
 	--surface-tonal-a40: #78757c;
 	--surface-tonal-a50: #918f95;
+
+
+
+	--border-radius: 0.5rem;
 }
 
 body {
@@ -57,4 +61,16 @@ body {
 	font-family: 'Inter', sans-serif;
 	background-color: var(--surface-tonal-a0);
 	color: var(--light-a0);
+}
+
+a {
+	text-decoration: none;
+	color: inherit;
+	transition: all 0.2s ease-in-out;
+}
+a:hover {
+	color: var(--primary-a50);
+}
+a:active {
+	color: var(--primary-a30);
 }

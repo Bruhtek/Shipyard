@@ -48,18 +48,24 @@ func (r *Runner) Run() {
 	go streamOutput(r.ActionId, r.Action, f)
 
 	if err := cmd.Wait(); err == nil {
-		ConnectionManager.BroadcastActionOutput(r.ActionId, "\r\n\n\nCommand finished\r\n")
+		toBroadcast := "\r\n\n\nCommand finished\r\n"
+
+		ConnectionManager.BroadcastActionOutput(r.ActionId, toBroadcast)
 
 		r.Action.Mutex.Lock()
+		r.Action.Output += toBroadcast
 		r.Action.Status = Success
 		r.Action.FinishedAt = time.Now()
 		r.Action.Mutex.Unlock()
 
 		go ActionManager.DeleteFinishedAction(r.Action, time.Second*10)
 	} else {
-		ConnectionManager.BroadcastActionOutput(r.ActionId, "\r\n\n\nCommand finished with error\r\n")
+		toBroadcast := "\r\n\n\nCommand finished with error\r\n"
+
+		ConnectionManager.BroadcastActionOutput(r.ActionId, toBroadcast)
 
 		r.Action.Mutex.Lock()
+		r.Action.Output += toBroadcast
 		r.Action.Status = Failed
 		r.Action.FinishedAt = time.Now()
 		r.Action.Mutex.Unlock()

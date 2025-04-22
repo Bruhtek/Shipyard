@@ -72,13 +72,21 @@ func GetActionsRouter() *chi.Mux {
 		r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
 			action := r.Context().Value("action").(*websocket.Action)
 
+			doNotDelete := false
+			// if it's still running, just stop it
+			if action.Status == websocket.Running {
+				doNotDelete = true
+			}
+
 			res := action.Cancel()
 
 			if res {
 				w.WriteHeader(http.StatusOK)
 				w.Header().Set("Content-Type", "application/json")
 
-				go websocket.ActionManager.DeleteFinishedAction(action, time.Millisecond*500)
+				if !doNotDelete {
+					go websocket.ActionManager.DeleteFinishedAction(action, time.Millisecond*500)
+				}
 
 				action.Mutex.RLock()
 				defer action.Mutex.RUnlock()

@@ -1,6 +1,9 @@
 package env_manager
 
-import "Shipyard/docker"
+import (
+	"Shipyard/docker"
+	"Shipyard/utils"
+)
 
 type EnvInterface interface {
 	GetName() string
@@ -13,4 +16,6 @@ type EnvInterface interface {
 	GetContainers() map[string]*docker.Container
 	GetContainer(id string) *docker.Container
 	GetContainerCount() int
+
+	GetEnvDescription() utils.EnvDescription
 }

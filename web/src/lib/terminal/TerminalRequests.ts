@@ -1,14 +1,17 @@
 import type { Terminal } from '$lib/terminal/TerminalStore.svelte';
 import { URLPrefix } from '$lib';
+import { ActionStatus } from '$lib/types/Action';
 
-// either stops and dismisses if running, else simply dismisses
+// either stops if running, else simply deletes
 export const DismissTerminal = async (t: Terminal): Promise<boolean> => {
 	// it has already been deleted on the backend
 	if (t.MarkedForDeletion) {
 		return true;
 	}
 
-	t.MarkedForDeletion = true;
+	if (t.Status !== ActionStatus.Running) {
+		t.MarkedForDeletion = true;
+	}
 
 	const res = await fetch(URLPrefix + `/api/actions/${t.id}`, {
 		method: 'DELETE',

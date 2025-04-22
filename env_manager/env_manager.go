@@ -41,7 +41,7 @@ func NewEnvManager() *EnvManagerStruct {
 	environments := database.LoadEnvironments()
 	for _, env := range environments {
 		if env.EnvType == "local" {
-			envManager.env[env.Name] = local_environment.LocalEnv
+			envManager.env[env.Name] = local_environment.NewLocalEnv()
 
 			envManager.env[env.Name].SetEnvType(env.EnvType)
 			envManager.env[env.Name].SetName(env.Name)

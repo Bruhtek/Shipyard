@@ -3,6 +3,7 @@ package env
 import (
 	"Shipyard/docker"
 	"Shipyard/env_manager"
+	"Shipyard/utils"
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
@@ -26,6 +27,29 @@ func EnvironmentMiddleware(next http.Handler) http.Handler {
 
 func GetEnvRouter() *chi.Mux {
 	r := chi.NewRouter()
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		environments := env_manager.EnvManager.GetEnvs()
+		envDescriptions := make([]utils.EnvDescription, 0, len(environments))
+
+		for _, env := range environments {
+			envDescriptions = append(envDescriptions, env.GetEnvDescription())
+		}
+
+		type EnvList struct {
+			Environments []utils.EnvDescription
+		}
+		envList := EnvList{
+			Environments: envDescriptions,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(envList); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
 
 	r.Route("/{environment}", func(r chi.Router) {
 		r.Use(EnvironmentMiddleware)
