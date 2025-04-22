@@ -46,7 +46,7 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 
 	println("[WS] Received message:", objectType, action, envName)
 
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	actionObj := Action{
 		Environment:   envName,
@@ -60,6 +60,7 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 		Status:        Pending,
 		Output:        "",
 		ctx:           ctx,
+		cancelFunc:    cancelFunc,
 		Mutex:         sync.RWMutex{},
 	}
 

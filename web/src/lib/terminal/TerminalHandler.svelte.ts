@@ -2,16 +2,13 @@ import type { Action } from 'svelte/action';
 import { dev } from '$app/environment';
 import { actionsList } from '$lib/types/Action';
 import TerminalStore from '$lib/terminal/TerminalStore.svelte';
+import { URLPrefix } from '$lib';
 
 const terminalHandler: Action<HTMLElement> = () => {
 	let intervalRef: number | null = null;
 
 	async function main() {
-		// console.log("Refreshing actions...")
-
-		const url = dev ? 'localhost:4000' : window.location.host;
-
-		const res = await fetch(window.location.protocol + "//" + url + "/api/actions")
+		const res = await fetch(URLPrefix + "/api/actions")
 
 		if (!res.ok) {
 			console.error('Failed to fetch actions');

@@ -4,15 +4,17 @@
 
 	type Props = {
 		children: Snippet<[]>;
+		center?: boolean;
 	} & HTMLButtonAttributes;
 
-	let { children, ...rest }: Props = $props();
+	let { children, center, ...rest }: Props = $props();
 </script>
 
 
 <button
 	{...rest}
 	class:invisible-button={true}
+	class:center={center}
 >
 	{@render children()}
 </button>
@@ -39,5 +41,9 @@
 		-webkit-user-select: none;
 		-moz-user-select: none;
 		user-select: none;
+	}
+	.center {
+		justify-content: center;
+		align-content: center;
 	}
 </style>

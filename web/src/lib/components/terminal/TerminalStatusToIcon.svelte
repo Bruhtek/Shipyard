@@ -6,18 +6,18 @@
 	import QuestionMark from '~icons/ph/question-mark';
 
 	import type { Component } from 'svelte';
-	import type { ActionStatus } from '$lib/types/Action';
+	import { ActionStatus } from '$lib/types/Action';
 
 	type Props = {
 		status: ActionStatus;
 	}
 
 	const statusToIcon: { [key in ActionStatus]: Component} = {
-		Pending: Hourglass,
-		Running: Spinner,
-		Success: Check,
-		Failed: WarningOctagon,
-	  	Unknown: QuestionMark
+		[ActionStatus.Pending]: Hourglass,
+		[ActionStatus.Running]: Spinner,
+		[ActionStatus.Success]: Check,
+		[ActionStatus.Failed]: WarningOctagon,
+		[ActionStatus.Unknown]: QuestionMark
 	};
 
 	const { status }: Props = $props();

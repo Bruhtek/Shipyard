@@ -63,6 +63,7 @@ func (am *AMStruct) DeleteFinishedAction(action *Action, delay time.Duration) {
 	defer am.mutex.Unlock()
 
 	action.Mutex.Lock()
+	defer action.Mutex.Unlock()
 
 	ConnectionManager.BroadcastActionMisc(action.ActionId, "Removed", true)
 

@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { Terminal as XTerm } from '@xterm/xterm';
-	import { type Terminal, terminalStatus } from '$lib/terminal/TerminalStore.svelte';
+	import { type Terminal } from '$lib/terminal/TerminalStore.svelte';
 	import { onMount } from 'svelte';
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
 	import InvisibleButton from '$lib/components/fragments/InvisibleButton.svelte';
 	import { fly } from 'svelte/transition';
 	import TerminalInfo from '$lib/components/terminal/TerminalInfo.svelte';
+		import { ActionStatus } from '$lib/types/Action';
+		import TerminalButtons from '$lib/components/terminal/TerminalButtons.svelte';
 
 	type Props = {
 		content: string;
@@ -23,7 +25,7 @@
 		xterm.write(data);
 	}
 
-	let cmdStatus = $derived(terminalStatus(terminal?.Status ?? -1));
+	let cmdStatus = $derived(terminal?.Status ?? -1);
 
 	onMount(() => {
 		xterm.options.theme = {
@@ -71,13 +73,19 @@
 	<div class="container"
 		 transition:fly={{ delay: 200, duration: 200, x: 500 }}
 
-		 class:success={cmdStatus === 'Success'}
-		 class:pending={cmdStatus === 'Pending'}
-		 class:running={cmdStatus === 'Running'}
-		 class:failed={cmdStatus === 'Failed'}
+		 class:success={cmdStatus === ActionStatus.Success}
+		 class:pending={cmdStatus === ActionStatus.Pending}
+		 class:running={cmdStatus === ActionStatus.Running}
+		 class:failed={cmdStatus === ActionStatus.Failed}
 
 		 class:toDelete={terminal?.MarkedForDeletion}
 	>
+		{#if terminal}
+			<TerminalButtons
+				bind:show={show}
+				{terminal}
+			/>
+		{/if}
 		<div class="terminal-content"
 			class:show={show}
 		>
@@ -106,6 +114,7 @@
 	.aside-container {
 		width: calc(var(--shortFormWidth) + 1rem);
 		transition: all 0.3s ease-in-out;
+		position: relative;
 	}
 	.aside-container.expanded {
         /* 1rem for padding, 4px for border */

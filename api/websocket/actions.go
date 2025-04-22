@@ -20,10 +20,35 @@ type Action struct {
 	FinishedAt    time.Time
 	Status        ActionStatus
 
-	Output string
-	ctx    context.Context
+	Output     string
+	ctx        context.Context
+	cancelFunc context.CancelFunc
 
 	Mutex sync.RWMutex `json:"-"`
+}
+
+func (a *Action) Cancel() (res bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			println("Panic while cancelling action:")
+			println(r)
+			a.Mutex.Unlock()
+			res = false
+		}
+	}()
+
+	a.Mutex.Lock()
+	defer a.Mutex.Unlock()
+
+	a.cancelFunc()
+
+	if a.Status == Running || a.Status == Pending {
+		a.Status = Failed
+		a.FinishedAt = time.Now()
+		return true
+	}
+
+	return true
 }
 
 type ActionStatus int

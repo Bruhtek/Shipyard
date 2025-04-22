@@ -1,1 +1,4 @@
-// place files you want to import through the `$lib` alias in this folder.
+import { dev } from '$app/environment';
+
+const url = dev ? 'localhost:4000' : window.location.host;
+export const URLPrefix = window.location.protocol + "//" + url

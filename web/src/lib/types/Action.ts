@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-export type ActionStatus = "Pending" | "Running" | "Success" | "Failed" | "Unknown";
+export enum ActionStatus {
+	Unknown = -1,
+	Pending = 0,
+	Running = 1,
+	Success = 2,
+	Failed = 3,
+}
+
 
 export const actionMetadata = z.object({
 	// command details
@@ -12,7 +19,7 @@ export const actionMetadata = z.object({
 
 	StartedAt: z.string().datetime({ offset: true }),
 	FinishedAt: z.string().datetime({ offset: true }),
-	Status: z.number().int().min(0).max(3),
+	Status: z.number().int().min(ActionStatus.Unknown).max(ActionStatus.Failed),
 
 	Output: z.string().optional(),
 });

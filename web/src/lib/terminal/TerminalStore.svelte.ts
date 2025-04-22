@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import type { ActionMetadata, ActionStatus } from '$lib/types/Action';
+import type { ActionMetadata } from '$lib/types/Action';
 
 export type Terminal = {
 	id: string;
@@ -19,21 +19,6 @@ export type Terminal = {
 
 	DoNotDelete?: boolean;
 	MarkedForDeletion?: boolean;
-}
-
-export const terminalStatus = (id: number): ActionStatus => {
-	switch (id) {
-		case 0:
-			return 'Pending';
-		case 1:
-			return 'Running';
-		case 2:
-			return 'Success';
-		case 3:
-			return 'Failed';
-		default:
-			return 'Unknown';
-	}
 }
 
 type Subscription = {
@@ -125,6 +110,11 @@ class terminalStore {
 
 	filterTerminalsById (ids: string[]) {
 		this.terminals = this.terminals.filter(t => ids.includes(t.id) || t.DoNotDelete);
+
+		const doNotDeletes = this.terminals.filter(t => !ids.includes(t.id) && t.DoNotDelete);
+		for (const t of doNotDeletes) {
+			t.MarkedForDeletion = true;
+		}
 
 		const subscriptionIds = Object.keys(this.subscriptions);
 		const filteredSubscriptions = subscriptionIds.filter(
