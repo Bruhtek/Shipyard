@@ -15,4 +15,6 @@
 	})
 </script>
 
+<title>{data.env} - Shipyard</title>
+
 {@render children()}

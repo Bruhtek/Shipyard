@@ -27,6 +27,8 @@
 	</main>
 </div>
 
+<title>Shipyard</title>
+
 <style>
 	.page {
 		display: flex;
