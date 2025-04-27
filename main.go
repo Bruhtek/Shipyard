@@ -15,6 +15,11 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
+	r.Use(middleware.Compress(5,
+		"text/html",
+		"text/css",
+		"application/json",
+		"application/javascript"))
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))

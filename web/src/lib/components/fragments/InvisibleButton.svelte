@@ -1,21 +1,17 @@
 <script lang="ts">
-  	import type { Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 
 	type Props = {
 		children: Snippet<[]>;
 		center?: boolean;
+		spaceBetween?: boolean;
 	} & HTMLButtonAttributes;
 
-	let { children, center, ...rest }: Props = $props();
+	let { children, center, spaceBetween, ...rest }: Props = $props();
 </script>
 
-
-<button
-	{...rest}
-	class:invisible-button={true}
-	class:center={center}
->
+<button {...rest} class:invisible-button={true} class:center class:spaceBetween>
 	{@render children()}
 </button>
 
@@ -45,5 +41,8 @@
 	.center {
 		justify-content: center;
 		align-content: center;
+	}
+	.spaceBetween {
+		justify-content: space-between;
 	}
 </style>

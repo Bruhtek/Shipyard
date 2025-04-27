@@ -7,7 +7,7 @@ const terminalHandler: Action<HTMLElement> = () => {
 	let intervalRef: number | null = null;
 
 	async function main() {
-		const res = await fetch(URLPrefix + "/api/actions")
+		const res = await fetch(URLPrefix + '/api/actions');
 
 		if (!res.ok) {
 			console.error('Failed to fetch actions');
@@ -17,15 +17,15 @@ const terminalHandler: Action<HTMLElement> = () => {
 		const data = actionsList.parse(await res.json());
 		const keys = Object.keys(data.Actions);
 
-		TerminalStore.filterTerminalsById(keys)
+		TerminalStore.filterTerminalsById(keys);
 
-		const existingIds = TerminalStore.getTerminalIds()
+		const existingIds = TerminalStore.getTerminalIds();
 		const newIds = keys.filter((id) => !existingIds.includes(id));
 
 		for (const id of newIds) {
 			const action = data.Actions[id];
 
-			TerminalStore.addTerminal(action)
+			TerminalStore.addTerminal(action);
 		}
 	}
 
@@ -37,7 +37,7 @@ const terminalHandler: Action<HTMLElement> = () => {
 		main().catch((err) => {
 			console.error('Error while refreshing actions:', err);
 		});
-	}, 10 * 1000)
+	}, 60 * 1000);
 
 	return {
 		destroy() {
@@ -46,6 +46,6 @@ const terminalHandler: Action<HTMLElement> = () => {
 			}
 		}
 	};
-}
+};
 
 export default terminalHandler;
