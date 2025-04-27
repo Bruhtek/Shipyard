@@ -100,6 +100,27 @@ func GetActionsRouter() *chi.Mux {
 				return
 			}
 		})
+
+		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+			action := r.Context().Value("action").(*websocket.Action)
+
+			res := action.Retry()
+			if res {
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+
+				action.Mutex.RLock()
+				defer action.Mutex.RUnlock()
+
+				if err := json.NewEncoder(w).Encode(action); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+			} else {
+				http.Error(w, "Failed to retry action", http.StatusInternalServerError)
+				return
+			}
+		})
 	})
 
 	return r

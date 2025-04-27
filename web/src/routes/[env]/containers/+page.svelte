@@ -5,7 +5,8 @@
 	import Table from '$lib/components/table/Table.svelte';
 	import type { TableColumn } from '$lib/types/Table';
 	import TruncatedID from '$lib/components/table/TruncatedID.svelte';
-	import ContainerState from '$lib/components/table/ContainerState.svelte';
+	import ContainerState from '$lib/components/table/container/ContainerState.svelte';
+	import ContainerActionButtons from '$lib/components/table/container/ContainerActionButtons.svelte';
 
 	let containerData = $state<Container[]>([]);
 
@@ -62,7 +63,7 @@
 		{ label: 'Name', sortable: true },
 		{ label: 'Image', sortable: true },
 		{ label: 'State', sortable: true },
-		{ label: 'More' }
+		{ label: '' }
 	];
 </script>
 
@@ -70,29 +71,16 @@ Containers
 
 <Table columns={tableColumns} data={sortedData} bind:sortedBy bind:sortedDirection>
 	{#snippet Row(r: Container)}
-		<tr class="t-row">
-			<td>
-				<TruncatedID id={r.ID} />
-			</td>
-			<td>{r.Name}</td>
-			<td>{r.Image}</td>
-			<td>
-				<ContainerState state={r.State} />
-			</td>
-			<td> Button here </td>
-		</tr>
+		<td>
+			<TruncatedID id={r.ID} />
+		</td>
+		<td>{r.Name}</td>
+		<td>{r.Image}</td>
+		<td>
+			<ContainerState state={r.State} />
+		</td>
+		<td>
+			<ContainerActionButtons id={r.ID} name={r.Name} />
+		</td>
 	{/snippet}
 </Table>
-
-<style>
-	.t-row td {
-		border: 0.1rem solid var(--surface-tonal-a10);
-		padding: 0.2rem 0.5rem;
-	}
-	.t-row:last-child td:first-child {
-		border-bottom-left-radius: var(--border-radius);
-	}
-	.t-row:last-child td:last-child {
-		border-bottom-right-radius: var(--border-radius);
-	}
-</style>

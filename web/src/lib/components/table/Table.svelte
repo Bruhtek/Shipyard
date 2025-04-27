@@ -18,11 +18,14 @@
 		sortedDirection = $bindable('asc'),
 		Row
 	}: Props = $props();
+
+	let selected = $state<string[]>([]);
 </script>
 
 <table class="table">
 	<thead class="thead">
 		<tr>
+			<th></th>
 			<th class="table-header">
 				<SortingButton
 					bind:current={sortedBy}
@@ -53,7 +56,22 @@
 	</thead>
 	<tbody class="tbody">
 		{#each data as rowData (rowData.ID)}
-			{@render Row(rowData)}
+			<tr class="t-row">
+				<td>
+					<input
+						type="checkbox"
+						checked={selected.includes(rowData.ID)}
+						onchange={() => {
+							if (selected.includes(rowData.ID)) {
+								selected = selected.filter((id) => id !== rowData.ID);
+							} else {
+								selected = [...selected, rowData.ID];
+							}
+						}}
+					/>
+				</td>
+				{@render Row(rowData)}
+			</tr>
 		{/each}
 	</tbody>
 </table>
@@ -77,5 +95,16 @@
 	}
 	.unsortable {
 		opacity: 0.5;
+	}
+
+	.t-row :global(td) {
+		border: 0.1rem solid var(--surface-tonal-a10);
+		padding: 0.2rem 0.5rem;
+	}
+	.t-row:last-child :global(td:first-child) {
+		border-bottom-left-radius: var(--border-radius);
+	}
+	.t-row:last-child :global(td:last-child) {
+		border-bottom-right-radius: var(--border-radius);
 	}
 </style>

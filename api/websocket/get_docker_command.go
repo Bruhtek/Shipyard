@@ -19,7 +19,7 @@ func GetDockerCommand(object string, action string, objectId string) []string {
 	case "image":
 		return empty
 	case "TEST":
-		return []string{"docker", "run", "--rm", "ubuntu", "bash", "-c", "while true; do sleep 1 && echo Slept; done"}
+		return []string{"docker", "run", "ubuntu", "bash", "-c", "while true; do sleep 1 && echo Slept; done"}
 	default:
 		return empty
 	}

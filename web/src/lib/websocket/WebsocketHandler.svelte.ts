@@ -1,6 +1,7 @@
 import type { Action } from 'svelte/action';
 import { dev } from '$app/environment';
 import WSDataStore, { ConnectionStatus } from '$lib/websocket/MessageHandler.svelte.js';
+import { refreshTerminals } from '$lib/terminal/TerminalHandler.svelte';
 
 const websocketHandler: Action<HTMLElement> = () => {
 	$effect(() => {
@@ -14,7 +15,7 @@ const websocketHandler: Action<HTMLElement> = () => {
 			socket = new WebSocket(`${protocol}://${url}/ws`);
 
 			const sendMessage = (data: object) => {
-				const message = JSON.stringify(data)
+				const message = JSON.stringify(data);
 
 				if (socket.readyState === WebSocket.OPEN) {
 					socket.send(message);
@@ -27,6 +28,8 @@ const websocketHandler: Action<HTMLElement> = () => {
 				console.log('[WS] Connected');
 				WSDataStore._setSendMessage(sendMessage);
 				WSDataStore.setConnectedStatus(ConnectionStatus.CONNECTED);
+				// refresh actions, while silently ignoring any errors
+				refreshTerminals().catch(() => {});
 			};
 			socket.onclose = () => {
 				console.log('[WS] Disconnected');

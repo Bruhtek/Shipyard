@@ -7,6 +7,13 @@ export enum ConnectionStatus {
 	RECONNECTING = 2
 }
 
+export type WSPayload = {
+	Environment: string;
+	Action: string;
+	ObjectId: string;
+	Object: string;
+};
+
 class MessageHandler {
 	connectionStatus: ConnectionStatus = $state<ConnectionStatus>(0);
 	_sendMessage: ((data: object) => void) | null = null;
@@ -38,7 +45,7 @@ class MessageHandler {
 			} catch (e) {
 				console.error('Failed to handle message', e);
 			}
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		} catch (_) {
 			// silently ignore
 		}
@@ -48,21 +55,12 @@ class MessageHandler {
 		this.connectionStatus = status;
 	}
 
-	async fetch(env: string, object: string, action: string) {
+	async sendMessage(payload: WSPayload) {
 		if (!this._sendMessage) {
-			throw new Error('Disconnected');
+			throw new Error('WebSocket not connected');
 		}
 
-		const actionId = nanoid();
-
-		const data = {
-			Environment: env,
-			Object: object,
-			Action: action,
-			ActionId: actionId
-		};
-
-		this._sendMessage(data);
+		this._sendMessage(payload);
 	}
 }
 

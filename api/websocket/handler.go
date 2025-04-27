@@ -46,6 +46,12 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 
 	println("[WS] Received message:", objectType, action, envName)
 
+	cmd := GetDockerCommand(objectType, action, objectId)
+	if len(cmd) == 0 {
+		log.Println("[WS] Invalid command:", objectType, action, objectId)
+		return
+	}
+
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	actionId := utils.RandString(32)
@@ -61,15 +67,10 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 		FinishedAt:    time.Time{},
 		Status:        Pending,
 		Output:        "",
+		Command:       cmd,
 		ctx:           ctx,
 		cancelFunc:    cancelFunc,
 		Mutex:         sync.RWMutex{},
-	}
-
-	cmd := GetDockerCommand(objectType, action, objectId)
-	if len(cmd) == 0 {
-		log.Println("[WS] Invalid command:", objectType, action, objectId)
-		return
 	}
 
 	runner := Runner{

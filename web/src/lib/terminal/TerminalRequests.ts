@@ -14,18 +14,39 @@ export const DismissTerminal = async (t: Terminal): Promise<boolean> => {
 	}
 
 	const res = await fetch(URLPrefix + `/api/actions/${t.id}`, {
-		method: 'DELETE',
-	})
+		method: 'DELETE'
+	});
 
 	if (res.ok || res.status === 404) {
 		return true;
 	}
 
 	return false;
-}
+};
+export const RetryTerminal = async (t: Terminal): Promise<boolean> => {
+	// it has already been deleted on the backend
+	if (t.MarkedForDeletion) {
+		return true;
+	}
+
+	if (t.Status !== ActionStatus.Failed) {
+		return false;
+	}
+
+	const res = await fetch(URLPrefix + `/api/actions/${t.id}`, {
+		method: 'POST'
+	});
+
+	if (res.ok || res.status === 404) {
+		return true;
+	}
+
+	return false;
+};
 
 const TerminalRequests = {
 	DismissTerminal,
-}
+	RetryTerminal
+};
 
 export default TerminalRequests;
