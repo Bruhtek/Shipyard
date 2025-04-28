@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func SetupContainerScanning() {
+func SetupScanning() {
 	go func() {
 		interval := 5 * time.Second
 		ticker := time.NewTicker(interval)
@@ -33,6 +33,7 @@ func SetupContainerScanning() {
 				envs := env_manager.EnvManager.GetEnvs()
 				for _, env := range envs {
 					env.ScanContainers()
+					env.ScanImages()
 				}
 			}
 		}

@@ -17,5 +17,10 @@ type EnvInterface interface {
 	GetContainer(id string) *docker.Container
 	GetContainerCount() int
 
+	ScanImages()
+	GetImages() map[string]*docker.Image
+	GetImage(id string) *docker.Image
+	GetImageCount() int
+
 	GetEnvDescription() utils.EnvDescription
 }

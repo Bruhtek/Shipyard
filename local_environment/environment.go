@@ -4,7 +4,7 @@ import (
 	"Shipyard/docker"
 	"Shipyard/terminals"
 	"Shipyard/utils"
-	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 	"sync"
@@ -15,6 +15,9 @@ type LocalEnvironment struct {
 	Name           string
 	containers     map[string]*docker.Container
 	containerMutex sync.RWMutex
+
+	images     map[string]*docker.Image
+	imageMutex sync.RWMutex
 }
 
 func (e *LocalEnvironment) GetName() string {
@@ -41,11 +44,114 @@ func (e *LocalEnvironment) ScanContainers() {
 	}
 
 	containers := ParsePsJson([]byte(out))
+	for id, container := range containers {
+		currentContainer, ok := e.containers[container.ID]
+		// image ID is immutable, so we can skip expensive inspect command if we already have it
+		if ok {
+			containers[id].ImageID = currentContainer.ImageID
+		} else {
+			out, err = terminals.RunSimpleCommand(
+				fmt.Sprintf("docker container inspect --format '{{.Image}}' %s", container.ID))
+			if err != nil {
+				log.Println("Failed to inspect container: ", err)
+				continue
+			}
+			containers[id].ImageID = strings.Trim(strings.TrimSpace(out), "'")
+		}
+	}
+
 	e.containers = make(map[string]*docker.Container)
 	for _, container := range containers {
 		e.containers[container.ID] = &container
 	}
+}
 
+func (e *LocalEnvironment) ScanImages() {
+	e.imageMutex.Lock()
+	defer e.imageMutex.Unlock()
+
+	out, err := terminals.RunSimpleCommand("docker image ls --format json --no-trunc")
+	if err != nil {
+		log.Println("Failed to list images: ", err)
+		return
+	}
+
+	// TODO: check if an image is dangling
+	//_, err = terminals.RunSimpleCommand("docker images -f dangling=true -q --no-trunc")
+	//if err != nil {
+	//	log.Println("Failed to list dangling images: ", err)
+	//	return
+	//}
+
+	images := ParseImageLsJson([]byte(out))
+	for num, image := range images {
+		currentImage, ok := e.images[image.ID]
+		if ok && currentImage.RepoDigests != nil {
+			images[num].RepoDigests = currentImage.RepoDigests
+		} else {
+			out, err = terminals.RunSimpleCommand(
+				fmt.Sprintf("docker image inspect --format {{.RepoDigests}} %s", image.ID))
+			if err != nil {
+				log.Println("Failed to inspect image: ", err)
+				continue
+			}
+			processedOut := strings.Split(strings.Trim(strings.TrimSpace(out), "[]"), ",")
+			images[num].RepoDigests = make([]string, len(processedOut))
+			for i, digest := range processedOut {
+				images[num].RepoDigests[i] = strings.Trim(strings.TrimSpace(digest), "'\"")
+			}
+		}
+	}
+
+	e.images = make(map[string]*docker.Image)
+	for _, image := range images {
+		e.images[image.ID] = &image
+	}
+
+	ids := make([]string, 0)
+	for id := range e.images {
+		ids = append(ids, id)
+	}
+	usedIds := e.getUsedImageIds(ids)
+	for _, id := range usedIds {
+		e.images[id].Used = true
+	}
+
+	//danglignIds = strings.TrimSpace(danglignIds)
+	//danglignIdsList := strings.Split(danglignIds, "\n")
+	//for _, id := range danglignIdsList {
+	//	id = strings.Trim(strings.TrimSpace(id), "'")
+	//	if id == "" {
+	//		continue
+	//	}
+	//
+	//}
+}
+
+func (e *LocalEnvironment) GetImages() map[string]*docker.Image {
+	e.imageMutex.RLock()
+	defer e.imageMutex.RUnlock()
+
+	return e.images
+}
+
+func (e *LocalEnvironment) GetImage(id string) *docker.Image {
+	e.imageMutex.RLock()
+	defer e.imageMutex.RUnlock()
+
+	image, ok := e.images[id]
+	if !ok {
+		return nil
+	}
+
+	return image
+}
+
+func (e *LocalEnvironment) GetImageCount() int {
+	e.imageMutex.RLock()
+	defer e.imageMutex.RUnlock()
+
+	return len(e.images)
 }
 
 func (e *LocalEnvironment) GetContainers() map[string]*docker.Container {
@@ -85,31 +191,4 @@ func NewLocalEnv() *LocalEnvironment {
 	}
 
 	return env
-}
-
-func ParsePsJson(jsonData []byte) []docker.Container {
-	splitData := strings.Split(string(jsonData), "\n")
-	containers := make([]docker.Container, 0)
-
-	for _, line := range splitData {
-		if line == "" {
-			continue
-		}
-
-		tempContainer := docker.TempContainer{}
-		err := json.Unmarshal([]byte(line), &tempContainer)
-		if err != nil {
-			continue
-		}
-
-		container, err := tempContainer.ToContainer()
-		if err != nil {
-			log.Printf("Error parsing container: %v", err)
-			continue
-		}
-
-		containers = append(containers, container)
-	}
-
-	return containers
 }

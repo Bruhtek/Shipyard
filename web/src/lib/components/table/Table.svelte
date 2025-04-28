@@ -25,16 +25,8 @@
 <table class="table">
 	<thead class="thead">
 		<tr>
+			<!-- This is for select -->
 			<th></th>
-			<th class="table-header">
-				<SortingButton
-					bind:current={sortedBy}
-					bind:currentDirection={sortedDirection}
-					sortByKey="ID"
-				>
-					ID
-				</SortingButton>
-			</th>
 			{#each columns as col (col.label)}
 				<th class="table-header">
 					{#if col.sortable}
@@ -88,13 +80,13 @@
 		border-top-right-radius: var(--border-radius);
 	}
 	.thead th {
-		background-color: var(--surface-tonal-a10);
+		background-color: var(--surface-tonal-a20);
 	}
 	.table-header {
 		padding: 0.5rem;
 	}
 	.unsortable {
-		opacity: 0.5;
+		opacity: 0.7;
 	}
 
 	.t-row :global(td) {
@@ -106,5 +98,9 @@
 	}
 	.t-row:last-child :global(td:last-child) {
 		border-bottom-right-radius: var(--border-radius);
+	}
+
+	.table :global(tr:hover) {
+		background-color: var(--surface-tonal-a10);
 	}
 </style>

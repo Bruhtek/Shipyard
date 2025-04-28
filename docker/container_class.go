@@ -18,6 +18,9 @@ type Container struct {
 	Status    string
 	CreatedAt time.Time
 	Command   string
+
+	// from more advanced processing
+	ImageID string
 }
 
 func (c *Container) toJSON() ([]byte, error) {

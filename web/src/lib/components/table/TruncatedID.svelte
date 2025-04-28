@@ -6,7 +6,13 @@
 	let { id }: Props = $props();
 
 	const length = $derived(id.length);
-	const truncated = $derived(id.slice(0, 12));
+	let actualId = $derived.by(() => {
+		if (id.startsWith('sha256:')) {
+			return id.slice(7);
+		}
+		return id;
+	});
+	const truncated = $derived(actualId.slice(0, 12));
 </script>
 
 {#if length > 12}

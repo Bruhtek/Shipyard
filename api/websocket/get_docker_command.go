@@ -17,7 +17,13 @@ func GetDockerCommand(object string, action string, objectId string) []string {
 
 		return append(base, object, action, objectId)
 	case "image":
-		return empty
+		permittedActions := []string{"pull", "rm"}
+		permittedActionsJoined := strings.Join(permittedActions, ",")
+
+		if !strings.Contains(permittedActionsJoined, action) {
+			return empty
+		}
+		return append(base, object, action, objectId)
 	case "TEST":
 		return []string{"docker", "run", "ubuntu", "bash", "-c", "while true; do sleep 1 && echo Slept; done"}
 	default:

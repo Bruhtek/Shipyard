@@ -7,6 +7,7 @@
 	import TruncatedID from '$lib/components/table/TruncatedID.svelte';
 	import ContainerState from '$lib/components/table/container/ContainerState.svelte';
 	import ContainerActionButtons from '$lib/components/table/container/ContainerActionButtons.svelte';
+	import ContainerImage from '$lib/components/table/container/ContainerImage.svelte';
 
 	let containerData = $state<Container[]>([]);
 
@@ -60,6 +61,7 @@
 		});
 	});
 	const tableColumns: TableColumn[] = [
+		{ label: 'ID', sortable: true },
 		{ label: 'Name', sortable: true },
 		{ label: 'Image', sortable: true },
 		{ label: 'State', sortable: true },
@@ -75,7 +77,9 @@ Containers
 			<TruncatedID id={r.ID} />
 		</td>
 		<td>{r.Name}</td>
-		<td>{r.Image}</td>
+		<td>
+			<ContainerImage image={r.Image} />
+		</td>
 		<td>
 			<ContainerState state={r.State} />
 		</td>

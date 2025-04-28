@@ -48,6 +48,6 @@
 		transition: all 0.2s ease;
 	}
 	.sorting-button:not(.active):not(:hover) {
-		opacity: 0.5;
+		opacity: 0.7;
 	}
 </style>
