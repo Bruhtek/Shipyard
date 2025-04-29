@@ -83,8 +83,15 @@ Containers
 		<td>
 			<ContainerState state={r.State} />
 		</td>
-		<td>
+		<td class="set-width">
 			<ContainerActionButtons id={r.ID} name={r.Name} />
 		</td>
 	{/snippet}
 </Table>
+
+<style>
+	td.set-width {
+		width: 2rem;
+		padding: 0;
+	}
+</style>

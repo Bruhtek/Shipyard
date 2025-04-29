@@ -88,7 +88,7 @@ Containers
 		<td class="align-right">
 			<HumanReadableSize size={r.Size} />
 		</td>
-		<td>
+		<td class="set-width">
 			<ImageActionButtons id={r.ID} repo={r.Repository} tag={r.Tag} />
 		</td>
 	{/snippet}
@@ -97,5 +97,9 @@ Containers
 <style>
 	.align-right {
 		text-align: right;
+	}
+	td.set-width {
+		width: 2rem;
+		padding: 0;
 	}
 </style>

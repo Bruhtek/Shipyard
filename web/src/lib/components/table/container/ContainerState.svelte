@@ -8,6 +8,7 @@
 	import DoorOpen from '~icons/ph/door-open';
 	import Skull from '~icons/ph/skull';
 	import type { Component } from 'svelte';
+	import Badge from '$lib/components/fragments/Badge.svelte';
 
 	type Props = {
 		state: ContainerState;
@@ -27,43 +28,29 @@
 	const Icon = $derived(StateToIcon[state]);
 </script>
 
-<span
-	class="container-state"
-	class:created={state === 'created'}
-	class:restarting={state === 'restarting'}
-	class:running={state === 'running'}
-	class:paused={state === 'paused'}
-	class:exited={state === 'exited'}
-	class:dead={state === 'dead'}
->
-	<Icon width="1.4rem" height="1.4rem" />
-	{toProperCase(state)}
-</span>
+{#snippet ContainerStatus(bg: string, color: string | undefined)}
+	<Badge background={bg} {color}>
+		<span class="icon">
+			<Icon width="1.4rem" height="1.4rem" />
+		</span>
+		{toProperCase(state)}
+	</Badge>
+{/snippet}
+
+{#if state === 'created' || state === 'exited'}
+	{@render ContainerStatus('var(--surface-tonal-a20)', undefined)}
+{:else if state === 'restarting' || state === 'paused'}
+	{@render ContainerStatus('var(--yellow-a20)', 'var(--dark-a0)')}
+{:else if state === 'running'}
+	{@render ContainerStatus('var(--green-a20)', 'var(--dark-a0)')}
+{:else if state === 'dead'}
+	{@render ContainerStatus('var(--red-a20)', 'var(--dark-a0)')}
+{/if}
 
 <style>
-	.container-state {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.2rem;
-		background-color: var(--surface-tonal-a20);
-		border-radius: 1rem;
-		padding: 0.1rem 0.4rem 0.1rem 0.3rem;
-	}
-	.created,
-	.exited {
-		background-color: var(--surface-tonal-a20);
-	}
-	.restarting,
-	.paused {
-		background-color: var(--yellow-a20);
-		color: var(--dark-a0);
-	}
-	.running {
-		background-color: var(--green-a20);
-		color: var(--dark-a0);
-	}
-	.dead {
-		background-color: var(--red-a20);
-		color: var(--dark-a0);
+	.icon {
+		display: inline-block;
+		width: 1.4rem;
+		height: 1.4rem;
 	}
 </style>
