@@ -3,6 +3,7 @@ package env_manager
 import (
 	"Shipyard/database"
 	"Shipyard/internal/local_environment"
+	"Shipyard/internal/remote_environment"
 	"sync"
 )
 
@@ -26,6 +27,17 @@ func (e *EnvManagerStruct) GetEnv(name string) EnvInterface {
 	}
 	return nil
 }
+func (e *EnvManagerStruct) GetEnvByKey(key string) EnvInterface {
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
+
+	for _, env := range e.env {
+		if env.GetEnvDescription().EnvKey == key {
+			return env
+		}
+	}
+	return nil
+}
 
 var EnvManager *EnvManagerStruct = NewEnvManager()
 
@@ -43,6 +55,13 @@ func NewEnvManager() *EnvManagerStruct {
 		if env.EnvType == "local" {
 			envManager.env[env.Name] = local_environment.NewLocalEnv()
 
+			envManager.env[env.Name].SetEnvType(env.EnvType)
+			envManager.env[env.Name].SetName(env.Name)
+			continue
+		}
+
+		if env.EnvType == "remote" {
+			envManager.env[env.Name] = remote_environment.NewRemoteEnvironment(env.EnvKey)
 			envManager.env[env.Name].SetEnvType(env.EnvType)
 			envManager.env[env.Name].SetName(env.Name)
 		}

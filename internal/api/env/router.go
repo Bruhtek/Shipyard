@@ -1,8 +1,8 @@
 package env
 
 import (
-	docker2 "Shipyard/internal/docker"
-	env_manager2 "Shipyard/internal/env_manager"
+	"Shipyard/internal/docker"
+	"Shipyard/internal/env_manager"
 	"Shipyard/internal/utils"
 	"context"
 	"encoding/json"
@@ -14,7 +14,7 @@ func EnvironmentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		envName := chi.URLParam(r, "environment")
 
-		if env := env_manager2.EnvManager.GetEnv(envName); env != nil {
+		if env := env_manager.EnvManager.GetEnv(envName); env != nil {
 			ctx := context.WithValue(r.Context(), "env", env)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -29,7 +29,7 @@ func GetEnvRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		environments := env_manager2.EnvManager.GetEnvs()
+		environments := env_manager.EnvManager.GetEnvs()
 		envDescriptions := make([]utils.EnvDescription, 0, len(environments))
 
 		for _, env := range environments {
@@ -54,9 +54,17 @@ func GetEnvRouter() *chi.Mux {
 	r.Route("/{environment}", func(r chi.Router) {
 		r.Use(EnvironmentMiddleware)
 
+		r.Get("/request", func(w http.ResponseWriter, r *http.Request) {
+			env := r.Context().Value("env").(env_manager.EnvInterface)
+
+			env.Request()
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("requested"))
+		})
+
 		r.Route("/containers", func(r chi.Router) {
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				env := r.Context().Value("env").(env_manager2.EnvInterface)
+				env := r.Context().Value("env").(env_manager.EnvInterface)
 
 				// if we already have containers, do not scan them again.
 				// the intervals package takes care of that
@@ -68,7 +76,7 @@ func GetEnvRouter() *chi.Mux {
 				containers := env.GetContainers()
 
 				type ContainerList struct {
-					Containers map[string]*docker2.Container
+					Containers map[string]*docker.Container
 					Length     int
 				}
 
@@ -88,7 +96,7 @@ func GetEnvRouter() *chi.Mux {
 
 		r.Route("/images", func(r chi.Router) {
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				env := r.Context().Value("env").(env_manager2.EnvInterface)
+				env := r.Context().Value("env").(env_manager.EnvInterface)
 
 				if env.GetImageCount() == 0 {
 					env.ScanImages()
@@ -97,7 +105,7 @@ func GetEnvRouter() *chi.Mux {
 				images := env.GetImages()
 
 				type ImageList struct {
-					Images map[string]*docker2.Image
+					Images map[string]*docker.Image
 					Length int
 				}
 				imageList := ImageList{

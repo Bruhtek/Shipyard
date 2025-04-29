@@ -1,7 +1,7 @@
 package local_environment
 
 import (
-	docker2 "Shipyard/internal/docker"
+	"Shipyard/internal/docker"
 	"Shipyard/internal/terminals"
 	"Shipyard/internal/utils"
 	"fmt"
@@ -13,10 +13,10 @@ import (
 type LocalEnvironment struct {
 	EnvType        string
 	Name           string
-	containers     map[string]*docker2.Container
+	containers     map[string]*docker.Container
 	containerMutex sync.RWMutex
 
-	images     map[string]*docker2.Image
+	images     map[string]*docker.Image
 	imageMutex sync.RWMutex
 }
 
@@ -60,7 +60,7 @@ func (e *LocalEnvironment) ScanContainers() {
 		}
 	}
 
-	e.containers = make(map[string]*docker2.Container)
+	e.containers = make(map[string]*docker.Container)
 	for _, container := range containers {
 		e.containers[container.ID] = &container
 	}
@@ -103,7 +103,7 @@ func (e *LocalEnvironment) ScanImages() {
 		}
 	}
 
-	e.images = make(map[string]*docker2.Image)
+	e.images = make(map[string]*docker.Image)
 	for _, image := range images {
 		e.images[image.ID] = &image
 	}
@@ -128,14 +128,14 @@ func (e *LocalEnvironment) ScanImages() {
 	//}
 }
 
-func (e *LocalEnvironment) GetImages() map[string]*docker2.Image {
+func (e *LocalEnvironment) GetImages() map[string]*docker.Image {
 	e.imageMutex.RLock()
 	defer e.imageMutex.RUnlock()
 
 	return e.images
 }
 
-func (e *LocalEnvironment) GetImage(id string) *docker2.Image {
+func (e *LocalEnvironment) GetImage(id string) *docker.Image {
 	e.imageMutex.RLock()
 	defer e.imageMutex.RUnlock()
 
@@ -154,14 +154,14 @@ func (e *LocalEnvironment) GetImageCount() int {
 	return len(e.images)
 }
 
-func (e *LocalEnvironment) GetContainers() map[string]*docker2.Container {
+func (e *LocalEnvironment) GetContainers() map[string]*docker.Container {
 	e.containerMutex.RLock()
 	defer e.containerMutex.RUnlock()
 
 	return e.containers
 }
 
-func (e *LocalEnvironment) GetContainer(id string) *docker2.Container {
+func (e *LocalEnvironment) GetContainer(id string) *docker.Container {
 	e.containerMutex.RLock()
 	defer e.containerMutex.RUnlock()
 
@@ -177,16 +177,30 @@ func (e *LocalEnvironment) GetContainerCount() int {
 
 func (e *LocalEnvironment) GetEnvDescription() utils.EnvDescription {
 	return utils.EnvDescription{
-		Name:    e.Name,
-		EnvType: e.EnvType,
+		Name:      e.Name,
+		EnvType:   e.EnvType,
+		EnvKey:    "",
+		Heartbeat: true,
 	}
+}
+
+// no-op implementation for local environment, just so that it compiles with the EnvInterface
+
+func (e *LocalEnvironment) Request() {
+	// no-op for local environment
+}
+func (e *LocalEnvironment) IsRequested() bool {
+	return false
+}
+func (e *LocalEnvironment) IsConnected() bool {
+	return true
 }
 
 func NewLocalEnv() *LocalEnvironment {
 	env := &LocalEnvironment{
 		Name:           "Local",
 		EnvType:        "local",
-		containers:     make(map[string]*docker2.Container),
+		containers:     make(map[string]*docker.Container),
 		containerMutex: sync.RWMutex{},
 	}
 

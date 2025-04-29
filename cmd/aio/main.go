@@ -3,6 +3,7 @@ package main
 import (
 	"Shipyard/internal/api/actions"
 	"Shipyard/internal/api/env"
+	"Shipyard/internal/api/remote"
 	"Shipyard/internal/api/websocket"
 	"Shipyard/internal/intervals"
 	"github.com/go-chi/chi/v5"
@@ -28,6 +29,7 @@ func main() {
 
 	envRouter := env.GetEnvRouter()
 	actionsRouter := actions.GetActionsRouter()
+	remoteRouter := remote.GetRemoteRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello, World!"))
@@ -36,6 +38,7 @@ func main() {
 
 	r.Mount("/api/env", envRouter)
 	r.Mount("/api/actions", actionsRouter)
+	r.Mount("/api/remote", remoteRouter)
 
 	println("Starting server on port 4000")
 	http.ListenAndServe(":4000", r)

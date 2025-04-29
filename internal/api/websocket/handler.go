@@ -5,27 +5,17 @@ import (
 	"Shipyard/internal/utils"
 	"context"
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"log"
 	"sync"
 	"time"
 )
 
-func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
+func Handler(connectionId string, msg map[string]interface{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("[WS] Recovered from panic while handling: %v", r)
 		}
 	}()
-
-	log.Println("Received message:", string(message))
-
-	var msg map[string]interface{}
-	err := json.Unmarshal(message, &msg)
-	if err != nil {
-		log.Println("[WS] Error unmarshalling message:", err)
-		return
-	}
 
 	// basic validation
 	envName, ok1 := msg["Environment"].(string)
@@ -62,7 +52,7 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 		Action:        action,
 		ObjectId:      objectId,
 		ActionId:      actionId,
-		InitializedBy: ConnectionManager.GetConnectionId(conn),
+		InitializedBy: connectionId,
 		StartedAt:     time.Now(),
 		FinishedAt:    time.Time{},
 		Status:        Pending,
@@ -83,4 +73,17 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 	ActionManager.createAction(&runner, &actionObj)
 
 	go runner.Run()
+}
+
+func HandlerString(connectionId string, message []byte) {
+	log.Println("Received message:", string(message))
+
+	var msg map[string]interface{}
+	err := json.Unmarshal(message, &msg)
+	if err != nil {
+		log.Println("[WS] Error unmarshalling message:", err)
+		return
+	}
+
+	Handler(connectionId, msg)
 }
