@@ -5,16 +5,14 @@
 	let { data, children }: LayoutProps = $props();
 
 	$effect(() => {
-		if(data.env) {
+		if (data.env) {
 			EnvStore.name = data.env;
 
 			return () => {
 				EnvStore.clear();
-			}
+			};
 		}
-	})
+	});
 </script>
-
-<title>{data.env} - Shipyard</title>
 
 {@render children()}

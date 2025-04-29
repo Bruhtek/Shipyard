@@ -8,8 +8,10 @@
 	import ContainerState from '$lib/components/table/container/ContainerState.svelte';
 	import ContainerActionButtons from '$lib/components/table/container/ContainerActionButtons.svelte';
 	import ContainerImage from '$lib/components/table/container/ContainerImage.svelte';
+	import TableHeader from '$lib/components/table/TableHeader.svelte';
 
 	let containerData = $state<Container[]>([]);
+	let loading = $state(true);
 
 	async function fetchData() {
 		const res = await fetch(`${URLPrefix}/api/env/${EnvStore.name}/containers`);
@@ -18,6 +20,7 @@
 			const parsed = TContainerResponse.parse(data);
 
 			containerData = Object.entries(parsed.Containers).map(([, v]) => v);
+			loading = false;
 		} else {
 			console.error('Failed to fetch container data:', res.statusText);
 		}
@@ -38,19 +41,34 @@
 		};
 	});
 
-	let sortedBy = $state('ID');
+	let filter = $state('');
+	let sortedBy = $state('Name');
 	let sortedDirection = $state<'asc' | 'desc'>('asc');
+	let filteredData = $derived.by(() => {
+		let query = filter.trim().toLowerCase();
+		if (query === '') {
+			return containerData;
+		}
+		return containerData.filter((container) => {
+			return (
+				container.Name.toLowerCase().includes(query) ||
+				container.Image.toLowerCase().includes(query) ||
+				container.ID.toLowerCase().includes(query)
+			);
+		});
+	});
+
 	let sortedData = $derived.by(() => {
 		const sortDirection = sortedDirection === 'asc' ? 1 : -1;
-		if (containerData.length === 0) {
-			return containerData;
+		if (filteredData.length === 0) {
+			return filteredData;
 		}
 		const key = sortedBy as keyof Container;
-		if (!(key in containerData[0])) {
-			return containerData;
+		if (!(key in filteredData[0])) {
+			return filteredData;
 		}
 
-		return containerData.toSorted((a, b) => {
+		return filteredData.toSorted((a, b) => {
 			if (a[key] < b[key]) {
 				return -1 * sortDirection;
 			}
@@ -69,9 +87,13 @@
 	];
 </script>
 
-Containers
+<svelte:head>
+	<title>Containers - {EnvStore.name} - Shipyard</title>
+</svelte:head>
 
-<Table columns={tableColumns} data={sortedData} bind:sortedBy bind:sortedDirection>
+<TableHeader title="Containers" bind:query={filter} />
+
+<Table columns={tableColumns} data={sortedData} bind:sortedBy bind:sortedDirection {loading}>
 	{#snippet Row(r: Container)}
 		<td>
 			<TruncatedID id={r.ID} />

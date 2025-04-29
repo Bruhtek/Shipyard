@@ -4,14 +4,14 @@
 	import Table from '$lib/components/table/Table.svelte';
 	import type { TableColumn } from '$lib/types/Table';
 	import TruncatedID from '$lib/components/table/TruncatedID.svelte';
-	import ContainerState from '$lib/components/table/container/ContainerState.svelte';
-	import ContainerActionButtons from '$lib/components/table/container/ContainerActionButtons.svelte';
 	import { type Image, TImageResponse } from '$lib/types/docker/Image';
 	import HumanReadableSize from '$lib/components/table/HumanReadableSize.svelte';
 	import ImageActionButtons from '$lib/components/table/image/ImageActionButtons.svelte';
 	import Badge from '$lib/components/fragments/Badge.svelte';
+	import TableHeader from '$lib/components/table/TableHeader.svelte';
 
 	let imageData = $state<Image[]>([]);
+	let loading = $state(true);
 
 	async function fetchData() {
 		const res = await fetch(`${URLPrefix}/api/env/${EnvStore.name}/images`);
@@ -20,6 +20,7 @@
 			const parsed = TImageResponse.parse(data);
 
 			imageData = Object.entries(parsed.Images).map(([, v]) => v);
+			loading = false;
 		} else {
 			console.error('Failed to fetch container data:', res.statusText);
 		}
@@ -40,19 +41,40 @@
 		};
 	});
 
-	let sortedBy = $state('ID');
+	let filter = $state('');
+	let sortedBy = $state('Repository');
 	let sortedDirection = $state<'asc' | 'desc'>('asc');
+	let filteredData = $derived.by(() => {
+		const query = filter.toLowerCase().trim();
+		if (query === '') {
+			return imageData;
+		}
+		if (query === 'unused') {
+			return imageData.filter((image) => !image.Used);
+		}
+		if (query === 'used') {
+			return imageData.filter((image) => image.Used);
+		}
+		return imageData.filter((image) => {
+			return (
+				image.ID.toLowerCase().includes(query) ||
+				image.Repository.toLowerCase().includes(query) ||
+				image.Tag.toLowerCase().includes(query)
+			);
+		});
+	});
+
 	let sortedData = $derived.by(() => {
 		const sortDirection = sortedDirection === 'asc' ? 1 : -1;
-		if (imageData.length === 0) {
-			return imageData;
+		if (filteredData.length === 0) {
+			return filteredData;
 		}
 		const key = sortedBy as keyof Image;
-		if (!(key in imageData[0])) {
-			return imageData;
+		if (!(key in filteredData[0])) {
+			return filteredData;
 		}
 
-		return imageData.toSorted((a, b) => {
+		return filteredData.toSorted((a, b) => {
 			if (a[key] < b[key]) {
 				return -1 * sortDirection;
 			}
@@ -71,18 +93,22 @@
 	];
 </script>
 
-Containers
+<svelte:head>
+	<title>Images - {EnvStore.name} - Shipyard</title>
+</svelte:head>
 
-<Table columns={tableColumns} data={sortedData} bind:sortedBy bind:sortedDirection>
+<TableHeader title="Images" bind:query={filter} />
+
+<Table columns={tableColumns} data={sortedData} bind:sortedBy bind:sortedDirection {loading}>
 	{#snippet Row(r: Image)}
 		<td>
 			<TruncatedID id={r.ID} />
-		</td>
-		<td>
-			{r.Repository}
 			{#if !r.Used}
 				<Badge background="var(--yellow-a20)" color="var(--dark-a0)">Unused</Badge>
 			{/if}
+		</td>
+		<td>
+			{r.Repository}
 		</td>
 		<td>{r.Tag}</td>
 		<td class="align-right">

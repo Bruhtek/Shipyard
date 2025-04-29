@@ -2,12 +2,14 @@
 	import type { TableColumn } from '$lib/types/Table';
 	import type { Snippet } from 'svelte';
 	import SortingButton from '$lib/components/table/SortingButton.svelte';
+	import Shadow from '$lib/components/fragments/Shadow.svelte';
 
 	type Props = {
 		columns: TableColumn[];
 		data: T[];
 		sortedBy: string;
 		sortedDirection: 'asc' | 'desc';
+		loading?: boolean;
 		Row: Snippet<[T]>;
 	};
 
@@ -16,7 +18,8 @@
 		data,
 		sortedBy = $bindable('ID'),
 		sortedDirection = $bindable('asc'),
-		Row
+		Row,
+		loading = false
 	}: Props = $props();
 
 	let selected = $state<string[]>([]);
@@ -65,10 +68,37 @@
 				{@render Row(rowData)}
 			</tr>
 		{/each}
+		{#if data.length === 0 && loading}
+			{#each { length: 3 }}
+				<tr class="t-row">
+					<td>
+						<input type="checkbox" checked={false} disabled />
+					</td>
+					{#each columns as col (col.label)}
+						<td>
+							<Shadow />
+						</td>
+					{/each}
+				</tr>
+			{/each}
+		{/if}
 	</tbody>
 </table>
 
+{#if data.length === 0 && !loading}
+	<div class="no-data">
+		<p>Empty</p>
+	</div>
+{/if}
+
 <style>
+	.no-data {
+		text-align: center;
+		padding: 1rem;
+		border: 0.1rem solid var(--surface-tonal-a10);
+		border-bottom-left-radius: var(--border-radius);
+		border-bottom-right-radius: var(--border-radius);
+	}
 	.table {
 		width: 100%;
 		border-collapse: collapse;
