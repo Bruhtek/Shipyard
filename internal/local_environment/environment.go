@@ -1,9 +1,9 @@
 package local_environment
 
 import (
-	"Shipyard/docker"
-	"Shipyard/terminals"
-	"Shipyard/utils"
+	docker2 "Shipyard/internal/docker"
+	"Shipyard/internal/terminals"
+	"Shipyard/internal/utils"
 	"fmt"
 	"log"
 	"strings"
@@ -13,10 +13,10 @@ import (
 type LocalEnvironment struct {
 	EnvType        string
 	Name           string
-	containers     map[string]*docker.Container
+	containers     map[string]*docker2.Container
 	containerMutex sync.RWMutex
 
-	images     map[string]*docker.Image
+	images     map[string]*docker2.Image
 	imageMutex sync.RWMutex
 }
 
@@ -60,7 +60,7 @@ func (e *LocalEnvironment) ScanContainers() {
 		}
 	}
 
-	e.containers = make(map[string]*docker.Container)
+	e.containers = make(map[string]*docker2.Container)
 	for _, container := range containers {
 		e.containers[container.ID] = &container
 	}
@@ -103,7 +103,7 @@ func (e *LocalEnvironment) ScanImages() {
 		}
 	}
 
-	e.images = make(map[string]*docker.Image)
+	e.images = make(map[string]*docker2.Image)
 	for _, image := range images {
 		e.images[image.ID] = &image
 	}
@@ -128,14 +128,14 @@ func (e *LocalEnvironment) ScanImages() {
 	//}
 }
 
-func (e *LocalEnvironment) GetImages() map[string]*docker.Image {
+func (e *LocalEnvironment) GetImages() map[string]*docker2.Image {
 	e.imageMutex.RLock()
 	defer e.imageMutex.RUnlock()
 
 	return e.images
 }
 
-func (e *LocalEnvironment) GetImage(id string) *docker.Image {
+func (e *LocalEnvironment) GetImage(id string) *docker2.Image {
 	e.imageMutex.RLock()
 	defer e.imageMutex.RUnlock()
 
@@ -154,14 +154,14 @@ func (e *LocalEnvironment) GetImageCount() int {
 	return len(e.images)
 }
 
-func (e *LocalEnvironment) GetContainers() map[string]*docker.Container {
+func (e *LocalEnvironment) GetContainers() map[string]*docker2.Container {
 	e.containerMutex.RLock()
 	defer e.containerMutex.RUnlock()
 
 	return e.containers
 }
 
-func (e *LocalEnvironment) GetContainer(id string) *docker.Container {
+func (e *LocalEnvironment) GetContainer(id string) *docker2.Container {
 	e.containerMutex.RLock()
 	defer e.containerMutex.RUnlock()
 
@@ -186,7 +186,7 @@ func NewLocalEnv() *LocalEnvironment {
 	env := &LocalEnvironment{
 		Name:           "Local",
 		EnvType:        "local",
-		containers:     make(map[string]*docker.Container),
+		containers:     make(map[string]*docker2.Container),
 		containerMutex: sync.RWMutex{},
 	}
 

@@ -1,8 +1,8 @@
 package intervals
 
 import (
-	"Shipyard/api/websocket"
-	"Shipyard/env_manager"
+	"Shipyard/internal/api/websocket"
+	"Shipyard/internal/env_manager"
 	"time"
 )
 

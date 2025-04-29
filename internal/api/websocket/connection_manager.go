@@ -1,7 +1,7 @@
 package websocket
 
 import (
-	"Shipyard/utils"
+	"Shipyard/internal/utils"
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"

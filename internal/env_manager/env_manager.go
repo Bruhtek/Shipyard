@@ -2,7 +2,7 @@ package env_manager
 
 import (
 	"Shipyard/database"
-	"Shipyard/local_environment"
+	"Shipyard/internal/local_environment"
 	"sync"
 )
 

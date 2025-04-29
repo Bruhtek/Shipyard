@@ -1,10 +1,10 @@
 package main
 
 import (
-	"Shipyard/api/actions"
-	"Shipyard/api/env"
-	"Shipyard/api/websocket"
-	"Shipyard/intervals"
+	"Shipyard/internal/api/actions"
+	"Shipyard/internal/api/env"
+	"Shipyard/internal/api/websocket"
+	"Shipyard/internal/intervals"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"

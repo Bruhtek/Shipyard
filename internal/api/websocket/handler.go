@@ -1,8 +1,8 @@
 package websocket
 
 import (
-	"Shipyard/env_manager"
-	"Shipyard/utils"
+	"Shipyard/internal/env_manager"
+	"Shipyard/internal/utils"
 	"context"
 	"encoding/json"
 	"github.com/gorilla/websocket"

@@ -1,22 +1,22 @@
 package local_environment
 
 import (
-	"Shipyard/docker"
+	docker2 "Shipyard/internal/docker"
 	"encoding/json"
 	"log"
 	"strings"
 )
 
-func ParsePsJson(jsonData []byte) []docker.Container {
+func ParsePsJson(jsonData []byte) []docker2.Container {
 	splitData := strings.Split(string(jsonData), "\n")
-	containers := make([]docker.Container, 0)
+	containers := make([]docker2.Container, 0)
 
 	for _, line := range splitData {
 		if line == "" {
 			continue
 		}
 
-		tempContainer := docker.TempContainer{}
+		tempContainer := docker2.TempContainer{}
 		err := json.Unmarshal([]byte(line), &tempContainer)
 		if err != nil {
 			continue
@@ -34,16 +34,16 @@ func ParsePsJson(jsonData []byte) []docker.Container {
 	return containers
 }
 
-func ParseImageLsJson(jsonData []byte) []docker.Image {
+func ParseImageLsJson(jsonData []byte) []docker2.Image {
 	splitData := strings.Split(string(jsonData), "\n")
-	images := make([]docker.Image, 0)
+	images := make([]docker2.Image, 0)
 
 	for _, line := range splitData {
 		if line == "" {
 			continue
 		}
 
-		tempImage := docker.TempImage{}
+		tempImage := docker2.TempImage{}
 		err := json.Unmarshal([]byte(line), &tempImage)
 		if err != nil {
 			log.Printf("Error parsing image: %v", err)

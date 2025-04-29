@@ -1,7 +1,7 @@
 package actions
 
 import (
-	"Shipyard/api/websocket"
+	websocket2 "Shipyard/internal/api/websocket"
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
@@ -13,7 +13,7 @@ func ActionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		actionId := chi.URLParam(r, "actionId")
 
-		if action, ok := websocket.ActionManager.GetAction(actionId); ok {
+		if action, ok := websocket2.ActionManager.GetAction(actionId); ok {
 			ctx := context.WithValue(r.Context(), "action", action)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -28,13 +28,13 @@ func GetActionsRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		actions := websocket.ActionManager.GetActions()
+		actions := websocket2.ActionManager.GetActions()
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 
 		type ActionList struct {
-			Actions map[string]*websocket.Action
+			Actions map[string]*websocket2.Action
 		}
 
 		actionList := ActionList{
@@ -56,7 +56,7 @@ func GetActionsRouter() *chi.Mux {
 		r.Use(ActionMiddleware)
 
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			action := r.Context().Value("action").(*websocket.Action)
+			action := r.Context().Value("action").(*websocket2.Action)
 
 			action.Mutex.RLock()
 			defer action.Mutex.RUnlock()
@@ -70,11 +70,11 @@ func GetActionsRouter() *chi.Mux {
 		})
 
 		r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
-			action := r.Context().Value("action").(*websocket.Action)
+			action := r.Context().Value("action").(*websocket2.Action)
 
 			doNotDelete := false
 			// if it's still running, just stop it
-			if action.Status == websocket.Running {
+			if action.Status == websocket2.Running {
 				doNotDelete = true
 			}
 
@@ -85,7 +85,7 @@ func GetActionsRouter() *chi.Mux {
 				w.Header().Set("Content-Type", "application/json")
 
 				if !doNotDelete {
-					go websocket.ActionManager.DeleteFinishedAction(action, time.Millisecond*500)
+					go websocket2.ActionManager.DeleteFinishedAction(action, time.Millisecond*500)
 				}
 
 				action.Mutex.RLock()
@@ -102,7 +102,7 @@ func GetActionsRouter() *chi.Mux {
 		})
 
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			action := r.Context().Value("action").(*websocket.Action)
+			action := r.Context().Value("action").(*websocket2.Action)
 
 			res := action.Retry()
 			if res {

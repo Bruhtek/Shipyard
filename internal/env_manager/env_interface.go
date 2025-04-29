@@ -1,8 +1,8 @@
 package env_manager
 
 import (
-	"Shipyard/docker"
-	"Shipyard/utils"
+	docker2 "Shipyard/internal/docker"
+	"Shipyard/internal/utils"
 )
 
 type EnvInterface interface {
@@ -13,13 +13,13 @@ type EnvInterface interface {
 	SetEnvType(envType string)
 
 	ScanContainers()
-	GetContainers() map[string]*docker.Container
-	GetContainer(id string) *docker.Container
+	GetContainers() map[string]*docker2.Container
+	GetContainer(id string) *docker2.Container
 	GetContainerCount() int
 
 	ScanImages()
-	GetImages() map[string]*docker.Image
-	GetImage(id string) *docker.Image
+	GetImages() map[string]*docker2.Image
+	GetImage(id string) *docker2.Image
 	GetImageCount() int
 
 	GetEnvDescription() utils.EnvDescription
