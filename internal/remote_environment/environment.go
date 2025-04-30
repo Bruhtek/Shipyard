@@ -14,9 +14,7 @@ type RemoteEnvironment struct {
 	local_environment.LocalEnvironment
 
 	EnvKey        string
-	heartbeat     bool // has the heartbeat been received
 	lastHeartbeat time.Time
-	requested     bool // has the remote been requested by the user
 	lastRequest   time.Time
 	mutex         sync.RWMutex // - for various container operations
 
@@ -28,7 +26,7 @@ func (r *RemoteEnvironment) GetEnvDescription() utils.EnvDescription {
 		Name:      r.Name,
 		EnvType:   r.EnvType,
 		EnvKey:    r.EnvKey,
-		Heartbeat: r.heartbeat,
+		Heartbeat: r.IsHeartbeat(),
 	}
 }
 
@@ -36,14 +34,14 @@ func (r *RemoteEnvironment) Request() {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	r.requested = true
 	r.lastRequest = time.Now()
 }
 func (r *RemoteEnvironment) IsRequested() bool {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
-	return r.requested
+	timeSince := time.Since(r.lastRequest)
+	return timeSince < shared_config.RemoteRequestedTimeout
 }
 func (r *RemoteEnvironment) IsConnected() bool {
 	r.mutex.RLock()
@@ -58,27 +56,49 @@ func (r *RemoteEnvironment) Heartbeat() {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	r.heartbeat = true
 	r.lastHeartbeat = time.Now()
 }
 func (r *RemoteEnvironment) IsHeartbeat() bool {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
-	return r.heartbeat
+	timeSince := time.Since(r.lastHeartbeat)
+	return timeSince < shared_config.RemoteHeartbeatInterval*2
 }
 
-func (r *RemoteEnvironment) heartbeatKiller() {
-	for range time.Tick(shared_config.RemoteHeartbeatInterval) {
-		r.mutex.Lock()
-		if time.Since(r.lastHeartbeat) > shared_config.RemoteHeartbeatInterval*2 {
-			r.heartbeat = false
-		}
-		if time.Since(r.lastRequest) > shared_config.RemoteRequestedTimeout {
-			r.requested = false
-		}
-		r.mutex.Unlock()
+func (r *RemoteEnvironment) ClearConnection() {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if r.Connection != nil {
+		r.Connection.Close()
 	}
+
+	r.Connection = nil
+}
+
+func (r *RemoteEnvironment) SetConnection(conn *websocket.Conn) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	if r.Connection != nil {
+		r.Connection.Close()
+	}
+
+	r.Connection = conn
+
+	go func() {
+		defer r.ClearConnection()
+
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				break
+			}
+
+			go WebsocketMessageHandler(message)
+		}
+	}()
 }
 
 //#endregion
@@ -91,8 +111,6 @@ func NewRemoteEnvironment(envKey string) *RemoteEnvironment {
 		},
 		EnvKey: envKey,
 	}
-
-	go env.heartbeatKiller()
 
 	return env
 }

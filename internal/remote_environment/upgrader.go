@@ -12,7 +12,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request) {
+func HandleRemoteWebsocketConnection(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Recovered from panic: %v", r)
@@ -24,7 +24,5 @@ func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	utils.IFErr(err, "Websocket upgrade error")
 
-	remote.mutex.Lock()
-	defer remote.mutex.Unlock()
-	remote.Connection = conn
+	remote.SetConnection(conn)
 }

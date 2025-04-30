@@ -46,7 +46,7 @@ func GetRemoteRouter() *chi.Mux {
 			w.Write([]byte("OK"))
 		})
 
-		r.Get("/ws", remote_environment.HandleWebsocketConnection)
+		r.Get("/ws", remote_environment.HandleRemoteWebsocketConnection)
 	})
 
 	return r

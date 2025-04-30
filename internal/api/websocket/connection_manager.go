@@ -82,7 +82,7 @@ func (m *CMStruct) TryAddConnection(conn *websocket.Conn) bool {
 			}
 
 			connectionId := m.GetConnectionId(conn)
-			HandlerString(connectionId, message)
+			go HandlerString(connectionId, message)
 		}
 	}()
 	return true
