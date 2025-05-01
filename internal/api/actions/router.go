@@ -2,6 +2,7 @@ package actions
 
 import (
 	websocket2 "Shipyard/internal/api/websocket"
+	"Shipyard/internal/utils"
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
@@ -74,7 +75,7 @@ func GetActionsRouter() *chi.Mux {
 
 			doNotDelete := false
 			// if it's still running, just stop it
-			if action.Status == websocket2.Running {
+			if action.Status == utils.Running {
 				doNotDelete = true
 			}
 

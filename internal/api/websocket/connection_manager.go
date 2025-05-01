@@ -129,7 +129,7 @@ func (m *CMStruct) BroadcastActionOutput(actionId string, message interface{}) {
 	}
 }
 
-func (m *CMStruct) BroadcastActionMetadata(actionId string, metadata interface{}) {
+func (m *CMStruct) BroadcastActionMetadata(action *Action) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -141,9 +141,9 @@ func (m *CMStruct) BroadcastActionMetadata(actionId string, metadata interface{}
 		}
 
 		actionMetadata := ActionMetadata{
-			ActionId: actionId,
+			ActionId: action.ActionId,
 			Type:     "ActionMetadata",
-			Metadata: metadata,
+			Metadata: action,
 		}
 
 		message, err := json.Marshal(actionMetadata)

@@ -2,13 +2,10 @@ package websocket
 
 import (
 	"Shipyard/internal/env_manager"
-	"Shipyard/internal/utils"
-	"context"
+	"Shipyard/internal/terminals"
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
-	"sync"
-	"time"
 )
 
 func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
@@ -52,35 +49,22 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 		return
 	}
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
+	broadcaster := Broadcaster{
+		BroadcastFn:     ConnectionManager.BroadcastActionOutput,
+		BroadcastMetaFn: ConnectionManager.BroadcastActionMetadata,
+		BroadcastMiscFn: ConnectionManager.BroadcastActionMisc,
+	}
+	actionObj := NewBroadcastAction(cmd, broadcaster, envName, objectType, action, objectId)
 
-	actionId := utils.RandString(32)
-
-	actionObj := Action{
-		Environment:   envName,
-		Object:        objectType,
-		Action:        action,
-		ObjectId:      objectId,
-		ActionId:      actionId,
-		InitializedBy: ConnectionManager.GetConnectionId(conn),
-		StartedAt:     time.Now(),
-		FinishedAt:    time.Time{},
-		Status:        Pending,
-		Output:        "",
-		Command:       cmd,
-		ctx:           ctx,
-		cancelFunc:    cancelFunc,
-		Mutex:         sync.RWMutex{},
+	runner := terminals.Runner{
+		Command:      cmd,
+		Ctx:          actionObj.Ctx,
+		OutputFn:     actionObj.HandleOutput,
+		OutputMetaFn: actionObj.HandleMetadata,
+		DeleteFn:     actionObj.HandleDelete,
 	}
 
-	runner := Runner{
-		Command:  cmd,
-		ActionId: actionObj.ActionId,
-		Action:   &actionObj,
-		Ctx:      ctx,
-	}
-
-	ActionManager.createAction(&runner, &actionObj)
+	ActionManager.createAction(actionObj)
 
 	go runner.Run()
 }

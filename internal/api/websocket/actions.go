@@ -1,6 +1,8 @@
 package websocket
 
 import (
+	"Shipyard/internal/terminals"
+	"Shipyard/internal/utils"
 	"context"
 	"sync"
 	"time"
@@ -18,14 +20,49 @@ type Action struct {
 	InitializedBy string // websocket connection id TODO: change that to user id
 	StartedAt     time.Time
 	FinishedAt    time.Time
-	Status        ActionStatus
+	Status        utils.ActionStatus
 
 	Command    []string
 	Output     string
-	ctx        context.Context
-	cancelFunc context.CancelFunc
+	Ctx        context.Context    `json:"-"`
+	CancelFunc context.CancelFunc `json:"-"`
 
 	Mutex sync.RWMutex `json:"-"`
+
+	Broadcaster *Broadcaster `json:"-"`
+}
+
+type Broadcaster struct {
+	BroadcastFn     func(string, interface{})
+	BroadcastMetaFn func(action *Action)
+	BroadcastMiscFn func(actionId string, key string, msg interface{})
+}
+
+func NewBroadcastAction(cmd []string, broadcaster *Broadcaster, env string, obj string, act string, objId string) *Action {
+	action := newAction(cmd, env, obj, act, objId)
+	action.Broadcaster = broadcaster
+	return action
+}
+
+func newAction(cmd []string, env string, obj string, act string, objId string) *Action {
+	actionId := utils.RandString(32)
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	return &Action{
+		Environment:   env,
+		Object:        obj,
+		Action:        act,
+		ObjectId:      objId,
+		ActionId:      actionId,
+		InitializedBy: "",
+		StartedAt:     time.Now(),
+		FinishedAt:    time.Time{},
+		Status:        utils.Pending,
+		Output:        "",
+		Command:       cmd,
+		Ctx:           ctx,
+		CancelFunc:    cancelFunc,
+	}
 }
 
 func (a *Action) Cancel() (res bool) {
@@ -41,10 +78,10 @@ func (a *Action) Cancel() (res bool) {
 	a.Mutex.Lock()
 	defer a.Mutex.Unlock()
 
-	a.cancelFunc()
+	a.CancelFunc()
 
-	if a.Status == Running || a.Status == Pending {
-		a.Status = Failed
+	if a.Status == utils.Running || a.Status == utils.Pending {
+		a.Status = utils.Failed
 		a.FinishedAt = time.Now()
 		return true
 	}
@@ -63,39 +100,58 @@ func (a *Action) Retry() (res bool) {
 	}()
 
 	a.Mutex.Lock()
-	defer a.Mutex.Unlock()
-
-	if a.Status != Failed {
+	if a.Status != utils.Failed {
 		return false
 	}
+	a.Ctx, a.CancelFunc = context.WithCancel(context.Background())
+	a.Mutex.Unlock()
 
-	ctx, cancelFunc := context.WithCancel(context.Background())
-
-	runner := Runner{
-		Command:  a.Command,
-		ActionId: a.ActionId,
-		Action:   a,
-		Ctx:      ctx,
+	runner := terminals.Runner{
+		Ctx:          a.Ctx,
+		Command:      a.Command,
+		OutputFn:     a.HandleOutput,
+		OutputMetaFn: a.HandleMetadata,
+		DeleteFn:     a.HandleDelete,
 	}
-	a.ctx = ctx
-	a.cancelFunc = cancelFunc
 
-	a.Status = Running
-	a.StartedAt = time.Now()
-	a.FinishedAt = time.Time{}
-	a.Output += "\x1b[2J\x1b[H" // this clear the screen
-	ConnectionManager.BroadcastActionOutput(a.ActionId, "\x1b[2J\x1b[H")
+	a.HandleOutput("\x1b[2J\x1b[H") // this clear the screen
 
 	go runner.Run()
 
 	return true
 }
 
-type ActionStatus int
+func (a *Action) HandleOutput(output string) {
+	a.Mutex.Lock()
+	defer a.Mutex.Unlock()
 
-const (
-	Pending ActionStatus = 0
-	Running ActionStatus = 1
-	Success ActionStatus = 2
-	Failed  ActionStatus = 3
-)
+	a.Output += output
+	if a.Broadcaster != nil {
+		a.Broadcaster.BroadcastFn(a.ActionId, output)
+	}
+}
+
+func (a *Action) HandleMetadata(status utils.ActionStatus) {
+	a.Mutex.Lock()
+	defer a.Mutex.Unlock()
+
+	a.Status = status
+	if status == utils.Success || status == utils.Failed {
+		a.FinishedAt = time.Now()
+	}
+	if status == utils.Running || status == utils.Pending {
+		a.StartedAt = time.Now()
+		a.FinishedAt = time.Time{}
+	}
+
+	if a.Broadcaster != nil {
+		a.Broadcaster.BroadcastMetaFn(a)
+	}
+}
+
+func (a *Action) HandleDelete() {
+	if a.Broadcaster != nil {
+		time.Sleep(10 * time.Second)
+		a.Broadcaster.BroadcastMiscFn(a.ActionId, "Removed", true)
+	}
+}
