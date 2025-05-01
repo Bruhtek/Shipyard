@@ -54,7 +54,7 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 		BroadcastMetaFn: ConnectionManager.BroadcastActionMetadata,
 		BroadcastMiscFn: ConnectionManager.BroadcastActionMisc,
 	}
-	actionObj := NewBroadcastAction(cmd, broadcaster, envName, objectType, action, objectId)
+	actionObj := NewBroadcastAction(cmd, &broadcaster, envName, objectType, action, objectId)
 
 	runner := terminals.Runner{
 		Command:      cmd,
