@@ -4,6 +4,7 @@ import (
 	"Shipyard/internal/local_environment"
 	"Shipyard/internal/shared_config"
 	"Shipyard/internal/utils"
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"sync"
 	"time"
@@ -99,6 +100,35 @@ func (r *RemoteEnvironment) SetConnection(conn *websocket.Conn) {
 			go WebsocketMessageHandler(message)
 		}
 	}()
+}
+func (r *RemoteEnvironment) PassWSMessage(message map[string]interface{}) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	if r.Connection == nil {
+		return
+	}
+
+	type WSMessage struct {
+		Type string
+		Data map[string]interface{}
+	}
+
+	msg := WSMessage{
+		Type: "Websocket",
+		Data: message,
+	}
+
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		println("ERROR: Failed to marshal message:", err.Error())
+		return
+	}
+
+	err = r.Connection.WriteMessage(websocket.TextMessage, msgBytes)
+	if err != nil {
+		println("ERROR: Failed to send message to remote environment:", err.Error())
+	}
 }
 
 //#endregion

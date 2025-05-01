@@ -14,7 +14,7 @@ type CMStruct struct {
 }
 
 type ConnectionData struct {
-	id string
+	Id string
 }
 
 var ConnectionManager = newConnectionManager()
@@ -31,7 +31,7 @@ func (m *CMStruct) GetConnection(id string) *websocket.Conn {
 	defer m.mutex.RUnlock()
 
 	for conn, data := range m.connections {
-		if data.id == id {
+		if data.Id == id {
 			return conn
 		}
 	}
@@ -43,7 +43,7 @@ func (m *CMStruct) GetConnectionId(conn *websocket.Conn) string {
 	defer m.mutex.RUnlock()
 
 	if data, ok := m.connections[conn]; ok {
-		return data.id
+		return data.Id
 	}
 	return ""
 }
@@ -67,7 +67,7 @@ func (m *CMStruct) TryAddConnection(conn *websocket.Conn) bool {
 	id := utils.RandString(32)
 
 	data := ConnectionData{
-		id: id,
+		Id: id,
 	}
 
 	m.connections[conn] = data
@@ -88,12 +88,19 @@ func (m *CMStruct) TryAddConnection(conn *websocket.Conn) bool {
 	return true
 }
 
+func (m *CMStruct) UnsafeOverrideConnections(connections map[*websocket.Conn]ConnectionData) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	m.connections = connections
+}
+
 func (m *CMStruct) RemoveConnection(conn *websocket.Conn) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	if data, ok := m.connections[conn]; ok {
-		log.Println("Removing connection with ID:", data.id)
+		log.Println("Removing connection with ID:", data.Id)
 		conn.Close()
 	}
 

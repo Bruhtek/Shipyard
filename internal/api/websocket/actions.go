@@ -22,8 +22,8 @@ type Action struct {
 
 	Command    []string
 	Output     string
-	ctx        context.Context
-	cancelFunc context.CancelFunc
+	Ctx        context.Context
+	CancelFunc context.CancelFunc
 
 	Mutex sync.RWMutex `json:"-"`
 }
@@ -41,7 +41,7 @@ func (a *Action) Cancel() (res bool) {
 	a.Mutex.Lock()
 	defer a.Mutex.Unlock()
 
-	a.cancelFunc()
+	a.CancelFunc()
 
 	if a.Status == Running || a.Status == Pending {
 		a.Status = Failed
@@ -77,8 +77,8 @@ func (a *Action) Retry() (res bool) {
 		Action:   a,
 		Ctx:      ctx,
 	}
-	a.ctx = ctx
-	a.cancelFunc = cancelFunc
+	a.Ctx = ctx
+	a.CancelFunc = cancelFunc
 
 	a.Status = Running
 	a.StartedAt = time.Now()

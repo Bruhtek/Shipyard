@@ -28,17 +28,22 @@ func main() {
 	}
 
 	connectionString := ""
+	wsConnectionString := ""
 	if useHttps {
 		connectionString = "https://"
+		wsConnectionString = "wss://"
 	} else {
 		connectionString = "http://"
+		wsConnectionString = "ws://"
 	}
 	connectionString += main_host + "/api/remote/" + remote_token + "/heartbeat"
+	wsConnectionString += main_host + "/api/remote/" + remote_token + "/ws"
 
 	internal.RemoteEnv.MainHost = main_host
 	internal.RemoteEnv.RemoteToken = remote_token
 	internal.RemoteEnv.UseHttps = useHttps
 	internal.RemoteEnv.ConnectionString = connectionString
+	internal.RemoteEnv.WSConnectionString = wsConnectionString
 	internal.RemoteEnv.HasSuccessfullyConnected = false
 
 	internal.HeartbeatLoop()

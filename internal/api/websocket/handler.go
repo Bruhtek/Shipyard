@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"Shipyard/internal/env_manager"
+	"Shipyard/internal/remote_environment"
 	"Shipyard/internal/utils"
 	"context"
 	"encoding/json"
@@ -34,6 +35,50 @@ func Handler(connectionId string, msg map[string]interface{}) {
 		return
 	}
 
+	if env.GetEnvDescription().EnvType == "remote" {
+		log.Println("[WS] Remote environment detected, passing action along")
+		remote, ok := env.(*remote_environment.RemoteEnvironment)
+		if !ok {
+			log.Println("[WS] Failed to cast environment to remote environment")
+			return
+		}
+		if !remote.IsConnected() {
+			log.Println("[WS] Remote environment is not connected")
+			return
+		}
+
+		remote.Request()
+		remote.PassWSMessage(msg)
+
+		actionObj := Action{
+			Environment:   envName,
+			Object:        objectType,
+			Action:        action,
+			ObjectId:      objectId,
+			ActionId:      actionId,
+			InitializedBy: connectionId,
+			StartedAt:     time.Now(),
+			FinishedAt:    time.Time{},
+			Status:        Pending,
+			Output:        "",
+			Command:       cmd,
+			Ctx:           ctx,
+			CancelFunc:    cancelFunc,
+			Mutex:         sync.RWMutex{},
+		}
+
+		runner := Runner{
+			Command:  cmd,
+			ActionId: actionObj.ActionId,
+			Action:   &actionObj,
+			Ctx:      ctx,
+		}
+
+		ActionManager.createAction(&actionObj)
+
+		return
+	}
+
 	println("[WS] Received message:", objectType, action, envName)
 
 	cmd := GetDockerCommand(objectType, action, objectId)
@@ -58,8 +103,8 @@ func Handler(connectionId string, msg map[string]interface{}) {
 		Status:        Pending,
 		Output:        "",
 		Command:       cmd,
-		ctx:           ctx,
-		cancelFunc:    cancelFunc,
+		Ctx:           ctx,
+		CancelFunc:    cancelFunc,
 		Mutex:         sync.RWMutex{},
 	}
 
@@ -70,7 +115,7 @@ func Handler(connectionId string, msg map[string]interface{}) {
 		Ctx:      ctx,
 	}
 
-	ActionManager.createAction(&runner, &actionObj)
+	ActionManager.createAction(&actionObj)
 
 	go runner.Run()
 }

@@ -30,8 +30,16 @@ func Heartbeat() {
 
 			RemoteEnv.HasSuccessfullyConnected = true
 		}
+		if RemoteEnv.IsConnected() {
+			println("INFO: Remote environment is no longer needed")
+			RemoteEnv.Disconnect()
+		}
 	} else if res.StatusCode == http.StatusAccepted {
-		println("INFO: Remote requested connection")
+		if !RemoteEnv.IsConnected() {
+			println("INFO: Remote requested connection")
+
+			go RemoteEnv.Connect()
+		}
 	} else {
 		println("WARNING: Unexpected response from main server: " + res.Status)
 	}

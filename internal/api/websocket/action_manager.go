@@ -19,7 +19,7 @@ func newActionManager() *AMStruct {
 
 var ActionManager = newActionManager()
 
-func (am *AMStruct) createAction(runner *Runner, action *Action) {
+func (am *AMStruct) createAction(action *Action) {
 	am.mutex.Lock()
 	defer am.mutex.Unlock()
 
