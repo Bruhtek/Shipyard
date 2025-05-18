@@ -34,6 +34,7 @@ func SetupScanning() {
 				for _, env := range envs {
 					env.ScanContainers()
 					env.ScanImages()
+					env.ScanNetworks()
 				}
 			}
 		}

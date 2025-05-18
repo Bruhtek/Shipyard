@@ -12,6 +12,7 @@ require (
 require (
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/go-chi/cors v1.2.1 // indirect
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/matoous/go-nanoid/v2 v2.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

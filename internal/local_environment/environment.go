@@ -1,19 +1,21 @@
 package local_environment
 
 import (
-	docker2 "Shipyard/internal/docker"
+	"Shipyard/internal/docker"
 	"Shipyard/internal/utils"
 	"sync"
 )
 
 type LocalEnvironment struct {
-	EnvType        string
-	Name           string
-	containers     map[string]*docker2.Container
+	EnvType string
+	Name    string
+	
+	containers     map[string]*docker.Container
 	containerMutex sync.RWMutex
-
-	images     map[string]*docker2.Image
-	imageMutex sync.RWMutex
+	images         map[string]*docker.Image
+	imageMutex     sync.RWMutex
+	networks       map[string]*docker.Network
+	networkMutex   sync.RWMutex
 }
 
 func (e *LocalEnvironment) GetName() string {
@@ -40,7 +42,7 @@ func NewLocalEnv() *LocalEnvironment {
 	env := &LocalEnvironment{
 		Name:           "Local",
 		EnvType:        "local",
-		containers:     make(map[string]*docker2.Container),
+		containers:     make(map[string]*docker.Container),
 		containerMutex: sync.RWMutex{},
 	}
 

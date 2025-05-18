@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"net/http"
+	"sort"
+	"strings"
 )
 
 func EnvironmentMiddleware(next http.Handler) http.Handler {
@@ -35,6 +37,10 @@ func GetEnvRouter() *chi.Mux {
 			envDescriptions = append(envDescriptions, env.GetEnvDescription())
 		}
 
+		sort.Slice(envDescriptions, func(i, j int) bool {
+			return strings.ToLower(envDescriptions[i].Name) < strings.ToLower(envDescriptions[j].Name)
+		})
+
 		type EnvList struct {
 			Environments []utils.EnvDescription
 		}
@@ -52,12 +58,14 @@ func GetEnvRouter() *chi.Mux {
 
 	containerRouter := GetContainersRouter()
 	imagesRouter := GetImagesRouter()
+	networkRouter := GetNetworksRouter()
 
 	r.Route("/{environment}", func(r chi.Router) {
 		r.Use(EnvironmentMiddleware)
 
 		r.Mount("/containers", containerRouter)
 		r.Mount("/images", imagesRouter)
+		r.Mount("/networks", networkRouter)
 	})
 
 	return r
