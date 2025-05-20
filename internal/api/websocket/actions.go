@@ -4,6 +4,7 @@ import (
 	"Shipyard/internal/terminals"
 	"Shipyard/internal/utils"
 	"context"
+	"github.com/rs/zerolog/log"
 	"sync"
 	"time"
 )
@@ -68,8 +69,12 @@ func newAction(cmd []string, env string, obj string, act string, objId string) *
 func (a *Action) Cancel() (res bool) {
 	defer func() {
 		if r := recover(); r != nil {
-			println("Panic while cancelling action:")
-			println(r)
+			err, ok := r.(error)
+			if ok {
+				log.Err(err).Msg("Panic while cancelling action")
+			} else {
+				log.Error().Msg("Panic while cancelling action - unable to cast to error")
+			}
 			a.Mutex.Unlock()
 			res = false
 		}
@@ -92,8 +97,12 @@ func (a *Action) Cancel() (res bool) {
 func (a *Action) Retry() (res bool) {
 	defer func() {
 		if r := recover(); r != nil {
-			println("Panic while retrying action:")
-			println(r)
+			err, ok := r.(error)
+			if ok {
+				log.Err(err).Msg("Panic while retrying action")
+			} else {
+				log.Error().Msg("Panic while retrying action - unable to cast to error")
+			}
 			a.Mutex.Unlock()
 			res = false
 		}

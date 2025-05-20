@@ -4,7 +4,7 @@ import (
 	"Shipyard/internal/docker"
 	"Shipyard/internal/terminals"
 	"fmt"
-	"log"
+	"github.com/rs/zerolog/log"
 	"strings"
 )
 
@@ -14,7 +14,7 @@ func (e *LocalEnvironment) ScanContainers() {
 
 	out, err := terminals.RunSimpleCommand("docker ps -a --format json --no-trunc")
 	if err != nil {
-		log.Println("Failed to list containers: ", err)
+		log.Err(err).Msg("Error listing containers")
 		return
 	}
 
@@ -28,7 +28,10 @@ func (e *LocalEnvironment) ScanContainers() {
 			out, err = terminals.RunSimpleCommand(
 				fmt.Sprintf("docker container inspect --format '{{.Image}}' %s", container.ID))
 			if err != nil {
-				log.Println("Failed to inspect container: ", err)
+				log.Err(err).
+					Str("container-id", container.ID).
+					Str("container-name", container.Name).
+					Msg("Error inspecting container")
 				continue
 			}
 			containers[id].ImageID = strings.Trim(strings.TrimSpace(out), "'")

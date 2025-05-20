@@ -3,10 +3,13 @@ package intervals
 import (
 	"Shipyard/internal/api/websocket"
 	"Shipyard/internal/env_manager"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
 func SetupScanning() {
+	scanEnvs() // initial scan should be done immediately
+
 	go func() {
 		interval := 5 * time.Second
 		ticker := time.NewTicker(interval)
@@ -30,13 +33,20 @@ func SetupScanning() {
 					}
 				}
 
-				envs := env_manager.EnvManager.GetEnvs()
-				for _, env := range envs {
-					env.ScanContainers()
-					env.ScanImages()
-					env.ScanNetworks()
-				}
+				scanEnvs()
 			}
 		}
 	}()
+}
+
+func scanEnvs() {
+	envs := env_manager.EnvManager.GetEnvs()
+	for _, env := range envs {
+		log.Debug().
+			Str("env", env.GetName()).
+			Msg("Scanning environment data")
+		env.ScanContainers()
+		env.ScanImages()
+		env.ScanNetworks()
+	}
 }

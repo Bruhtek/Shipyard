@@ -9,6 +9,8 @@
 	import ImageActionButtons from '$lib/components/table/image/ImageActionButtons.svelte';
 	import Badge from '$lib/components/fragments/Badge.svelte';
 	import TableHeader from '$lib/components/table/TableHeader.svelte';
+	import { DATA_FETCHING_INTERVAL } from '$lib/consts';
+	import { sortDataByKey } from '$lib/utils/displayUtils';
 
 	let imageData = $state<Image[]>([]);
 	let loading = $state(true);
@@ -34,7 +36,7 @@
 		fetchData();
 		const interval = setInterval(() => {
 			fetchData();
-		}, 3 * 1000);
+		}, DATA_FETCHING_INTERVAL);
 
 		return () => {
 			clearInterval(interval);
@@ -57,33 +59,15 @@
 		}
 		return imageData.filter((image) => {
 			return (
-				image.ID.toLowerCase().includes(query) ||
+				image.ID.toLowerCase().startsWith(query) ||
 				image.Repository.toLowerCase().includes(query) ||
 				image.Tag.toLowerCase().includes(query)
 			);
 		});
 	});
 
-	let sortedData = $derived.by(() => {
-		const sortDirection = sortedDirection === 'asc' ? 1 : -1;
-		if (filteredData.length === 0) {
-			return filteredData;
-		}
-		const key = sortedBy as keyof Image;
-		if (!(key in filteredData[0])) {
-			return filteredData;
-		}
+	let sortedData = $derived(sortDataByKey(filteredData, sortedBy, sortedDirection));
 
-		return filteredData.toSorted((a, b) => {
-			if (a[key] < b[key]) {
-				return -1 * sortDirection;
-			}
-			if (a[key] > b[key]) {
-				return 1 * sortDirection;
-			}
-			return 0;
-		});
-	});
 	const tableColumns: TableColumn[] = [
 		{ label: 'ID', sortable: true },
 		{ label: 'Repository', sortable: true },

@@ -27,9 +27,13 @@ func (e *EnvManagerStruct) GetEnv(name string) EnvInterface {
 	return nil
 }
 
-var EnvManager *EnvManagerStruct = NewEnvManager()
+var EnvManager *EnvManagerStruct
 
-func NewEnvManager() *EnvManagerStruct {
+func InitializeEnvManager() {
+	EnvManager = newEnvManager()
+}
+
+func newEnvManager() *EnvManagerStruct {
 	envManager := &EnvManagerStruct{
 		env:   make(map[string]EnvInterface),
 		mutex: sync.RWMutex{},

@@ -4,7 +4,7 @@ import (
 	"Shipyard/internal/utils"
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"log"
+	"github.com/rs/zerolog/log"
 	"sync"
 )
 
@@ -92,7 +92,7 @@ func (m *CMStruct) RemoveConnection(conn *websocket.Conn) {
 	defer m.mutex.Unlock()
 
 	if data, ok := m.connections[conn]; ok {
-		log.Println("Removing connection with ID:", data.id)
+		log.Debug().Str("connection-id", data.id).Msg("[WS] Removing WS connection")
 		conn.Close()
 	}
 
@@ -118,7 +118,7 @@ func (m *CMStruct) BroadcastActionOutput(actionId string, message interface{}) {
 
 		message, err := json.Marshal(taskMessage)
 		if err != nil {
-			log.Println("Error marshalling message:", err)
+			log.Err(err).Msg("[WS] Error marshalling message")
 			break
 		}
 
@@ -148,7 +148,7 @@ func (m *CMStruct) BroadcastActionMetadata(action *Action) {
 
 		message, err := json.Marshal(actionMetadata)
 		if err != nil {
-			log.Println("Error marshalling message:", err)
+			log.Err(err).Msg("[WS] Error marshalling message")
 			break
 		}
 
@@ -172,7 +172,7 @@ func (m *CMStruct) BroadcastActionMisc(actionId string, messageKey string, messa
 
 		msg, err := json.Marshal(messageData)
 		if err != nil {
-			log.Println("Error marshalling message:", err)
+			log.Err(err).Msg("[WS] Error marshalling message")
 			break
 		}
 

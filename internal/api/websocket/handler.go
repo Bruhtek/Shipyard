@@ -5,22 +5,29 @@ import (
 	"Shipyard/internal/terminals"
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"log"
+	"github.com/rs/zerolog/log"
 )
 
 func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("[WS] Recovered from panic while handling: %v", r)
+			err, ok := r.(error)
+			if ok {
+				log.Err(err).Msg("[WS] Panic while handling message:")
+			} else {
+				log.Err(err).Msg("[WS] Panic while handling message - unable to cast to error")
+			}
 		}
 	}()
 
-	log.Println("Received message:", string(message))
+	log.Debug().Str("message", string(message)).Msg("[WS] Received message")
 
 	var msg map[string]interface{}
 	err := json.Unmarshal(message, &msg)
 	if err != nil {
-		log.Println("[WS] Error unmarshalling message:", err)
+		log.Err(err).
+			Str("message", string(message)).
+			Msg("[WS] Error unmarshalling message:")
 		return
 	}
 
@@ -31,23 +38,41 @@ func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
 	objectId, ok4 := msg["ObjectId"].(string)
 
 	if !ok1 || !ok2 || !ok3 || !ok4 {
-		log.Println("[WS] Invalid message format")
+		log.Error().
+			Str("message", string(message)).
+			Msg("[WS] Invalid message format")
 		return
 	}
 
 	env := env_manager.EnvManager.GetEnv(envName)
 	if env == nil {
-		log.Println("[WS] Environment not found:", envName)
+		log.Error().
+			Str("environment", envName).
+			Msg("[WS] Environment not found")
 		return
 	}
 
-	println("[WS] Received message:", objectType, action, envName)
+	log.Debug().
+		Str("objectType", objectType).
+		Str("action", action).
+		Str("envName", envName).
+		Msg("[WS] Received message:")
 
 	cmd := GetDockerCommand(objectType, action, objectId)
 	if len(cmd) == 0 {
-		log.Println("[WS] Invalid command:", objectType, action, objectId)
+		log.Error().
+			Str("objectType", objectType).
+			Str("action", action).
+			Str("objectId", objectId).
+			Str("envName", envName).
+			Msg("[WS] Invalid command")
 		return
 	}
+
+	log.Debug().
+		Strs("command", cmd).
+		Str("environment", envName).
+		Msg("[WS] Running command")
 
 	broadcaster := Broadcaster{
 		BroadcastFn:     ConnectionManager.BroadcastActionOutput,

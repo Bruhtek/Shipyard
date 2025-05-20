@@ -1,16 +1,8 @@
 package utils
 
 import (
-	"log"
 	"math/rand"
 )
-
-func IFErr(err error, message string) {
-	if err != nil {
-		log.Printf("%s: %v", message, err)
-		panic(err)
-	}
-}
 
 const letters = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 

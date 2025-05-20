@@ -1,9 +1,9 @@
 package websocket
 
 import (
-	"Shipyard/internal/utils"
+	"Shipyard/internal/logger"
 	"github.com/gorilla/websocket"
-	"log"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -18,15 +18,24 @@ var upgrader = websocket.Upgrader{
 func HandleWebsocketConnection(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("Recovered from panic: %v", r)
+			logger.HandleSimpleRecoverPanic(r, "[WS] Error while handling a new websocket connection")
 		}
 	}()
 
 	conn, err := upgrader.Upgrade(w, r, nil)
-	utils.IFErr(err, "Websocket upgrade error")
+	if err != nil {
+		log.Err(err).
+			Str("request", r.URL.String()).
+			Msg("[WS] Error while upgrading connection")
+	}
 
 	err = conn.WriteMessage(websocket.TextMessage, []byte("Connected"))
-	utils.IFErr(err, "Websocket write error")
+	if err != nil {
+		log.Err(err).
+			Str("request", r.URL.String()).
+			Msg("[WS] Error while sending a 'Connected' message")
+		return
+	}
 
 	ConnectionManager.TryAddConnection(conn)
 }

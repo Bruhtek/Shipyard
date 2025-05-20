@@ -4,7 +4,7 @@ import (
 	"Shipyard/internal/docker"
 	"Shipyard/internal/terminals"
 	"fmt"
-	"log"
+	"github.com/rs/zerolog/log"
 	"strings"
 )
 
@@ -21,14 +21,13 @@ func (e *LocalEnvironment) ScanImages() {
 
 	out, err := terminals.RunSimpleCommand("docker image ls --format json --no-trunc")
 	if err != nil {
-		log.Println("Failed to list images: ", err)
+		log.Err(err).Msg("Error listing images")
 		return
 	}
 
 	// TODO: check if an image is dangling
 	//_, err = terminals.RunSimpleCommand("docker images -f dangling=true -q --no-trunc")
 	//if err != nil {
-	//	log.Println("Failed to list dangling images: ", err)
 	//	return
 	//}
 
@@ -41,7 +40,11 @@ func (e *LocalEnvironment) ScanImages() {
 			out, err = terminals.RunSimpleCommand(
 				fmt.Sprintf("docker image inspect --format {{.RepoDigests}} %s", image.ID))
 			if err != nil {
-				log.Println("Failed to inspect image: ", err)
+				log.Err(err).
+					Str("image-id", image.ID).
+					Str("image-repository", image.Repository).
+					Str("image-tag", image.Tag).
+					Msg("Error inspecting image")
 				continue
 			}
 			processedOut := strings.Split(strings.Trim(strings.TrimSpace(out), "[]"), ",")

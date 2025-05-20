@@ -3,14 +3,18 @@ package database
 import (
 	"database/sql"
 	_ "github.com/glebarez/go-sqlite"
-	"log"
+	"github.com/rs/zerolog/log"
 	"os"
 )
 
-var DB *sql.DB = initializeDatabase()
+var DB *sql.DB
 
-func initializeDatabase() *sql.DB {
-	DB, err := sql.Open("sqlite", "shipyard.db")
+func InitializeDatabase() *sql.DB {
+	log.Info().
+		Msg("Initializing database")
+
+	var err error
+	DB, err = sql.Open("sqlite", "shipyard.db")
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +33,9 @@ func initializeDatabase() *sql.DB {
 		if err != nil {
 			panic(err)
 		}
-		log.Println("Running migration: ", filePath)
+		log.Info().
+			Str("file", filePath).
+			Msg("Running database migration: ")
 		_, err = DB.Exec(string(migration))
 		if err != nil {
 			panic(err)

@@ -6,9 +6,9 @@ import (
 	"bytes"
 	"context"
 	"github.com/creack/pty"
+	"github.com/rs/zerolog/log"
 	"io"
 	"os/exec"
-	"strings"
 )
 
 type Runner struct {
@@ -22,12 +22,17 @@ type Runner struct {
 func (r *Runner) Run() {
 	defer func() {
 		if rec := recover(); rec != nil {
-			println("[WS] Recovered from panic while running command '" +
-				strings.Join(r.Command, " ") +
-				"':")
-
-			println(rec)
-
+			err, ok := rec.(error)
+			if ok {
+				log.Err(err).
+					Strs("command", r.Command).
+					Msg("[WS] Panic while running command:")
+			} else {
+				log.Error().
+					Strs("command", r.Command).
+					Msg("[WS] Panic while running command - unable to cast to error")
+			}
+			
 			r.OutputFn("\r\n\nError running command\r\n")
 		}
 	}()

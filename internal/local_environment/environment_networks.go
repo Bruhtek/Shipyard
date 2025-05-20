@@ -3,7 +3,7 @@ package local_environment
 import (
 	"Shipyard/internal/docker"
 	"Shipyard/internal/terminals"
-	"log"
+	"github.com/rs/zerolog/log"
 )
 
 func (e *LocalEnvironment) ScanNetworks() {
@@ -12,7 +12,7 @@ func (e *LocalEnvironment) ScanNetworks() {
 
 	out, err := terminals.RunSimpleCommand(NetworkLsCommand)
 	if err != nil {
-		log.Println("Failed to list networks: ", err)
+		log.Err(err).Msg("Error listing networks")
 		return
 	}
 

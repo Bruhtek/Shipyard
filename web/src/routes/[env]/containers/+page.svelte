@@ -9,6 +9,8 @@
 	import ContainerActionButtons from '$lib/components/table/container/ContainerActionButtons.svelte';
 	import ContainerImage from '$lib/components/table/container/ContainerImage.svelte';
 	import TableHeader from '$lib/components/table/TableHeader.svelte';
+	import { DATA_FETCHING_INTERVAL } from '$lib/consts';
+	import { sortDataByKey } from '$lib/utils/displayUtils';
 
 	let containerData = $state<Container[]>([]);
 	let loading = $state(true);
@@ -34,7 +36,7 @@
 		fetchData();
 		const interval = setInterval(() => {
 			fetchData();
-		}, 3 * 1000);
+		}, DATA_FETCHING_INTERVAL);
 
 		return () => {
 			clearInterval(interval);
@@ -53,31 +55,13 @@
 			return (
 				container.Name.toLowerCase().includes(query) ||
 				container.Image.toLowerCase().includes(query) ||
-				container.ID.toLowerCase().includes(query)
+				container.ID.toLowerCase().startsWith(query)
 			);
 		});
 	});
 
-	let sortedData = $derived.by(() => {
-		const sortDirection = sortedDirection === 'asc' ? 1 : -1;
-		if (filteredData.length === 0) {
-			return filteredData;
-		}
-		const key = sortedBy as keyof Container;
-		if (!(key in filteredData[0])) {
-			return filteredData;
-		}
+	let sortedData = $derived(sortDataByKey(filteredData, sortedBy, sortedDirection));
 
-		return filteredData.toSorted((a, b) => {
-			if (a[key] < b[key]) {
-				return -1 * sortDirection;
-			}
-			if (a[key] > b[key]) {
-				return 1 * sortDirection;
-			}
-			return 0;
-		});
-	});
 	const tableColumns: TableColumn[] = [
 		{ label: 'ID', sortable: true },
 		{ label: 'Name', sortable: true },

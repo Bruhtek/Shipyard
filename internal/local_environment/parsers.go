@@ -3,7 +3,7 @@ package local_environment
 import (
 	"Shipyard/internal/docker"
 	"encoding/json"
-	"log"
+	"github.com/rs/zerolog/log"
 	"strings"
 	"time"
 )
@@ -20,12 +20,13 @@ func ParsePsJson(jsonData []byte) []docker.Container {
 		tempContainer := docker.TempContainer{}
 		err := json.Unmarshal([]byte(line), &tempContainer)
 		if err != nil {
+			log.Err(err).Msg("Error parsing container from JSON")
 			continue
 		}
 
 		container, err := tempContainer.ToContainer()
 		if err != nil {
-			log.Printf("Error parsing container: %v", err)
+			log.Err(err).Msg("Error converting temp container to container")
 			continue
 		}
 
@@ -47,13 +48,13 @@ func ParseImageLsJson(jsonData []byte) []docker.Image {
 		tempImage := docker.TempImage{}
 		err := json.Unmarshal([]byte(line), &tempImage)
 		if err != nil {
-			log.Printf("Error parsing image: %v", err)
+			log.Err(err).Msg("Error parsing image from JSON")
 			continue
 		}
 
 		image, err := tempImage.ToImage()
 		if err != nil {
-			log.Printf("Error converting to image: %v", err)
+			log.Err(err).Msg("Error converting temp image to image")
 			continue
 		}
 
@@ -76,12 +77,12 @@ func ParseNetworkLsJson(jsonData *string) []docker.Network {
 
 		splitLine := strings.Split(line, ";")
 		if len(splitLine) < 8 {
-			log.Printf("Invalid network data: %s", line)
+			log.Error().Str("line", line).Msg("Invalid network data")
 			continue
 		}
 		createdAt, err := time.Parse("2006-01-02 15:04:05 -0700 MST", splitLine[2])
 		if err != nil {
-			log.Printf("Error parsing createdAt: %v", err)
+			log.Err(err).Str("createdAt", splitLine[2]).Msg("Error parsing createdAt time")
 			continue
 		}
 
@@ -93,7 +94,7 @@ func ParseNetworkLsJson(jsonData *string) []docker.Network {
 				if len(labelSplit) == 2 {
 					labels[labelSplit[0]] = labelSplit[1]
 				} else {
-					log.Printf("Invalid label format: %s", label)
+					log.Error().Str("label", label).Msg("Invalid label format")
 				}
 			}
 		}
