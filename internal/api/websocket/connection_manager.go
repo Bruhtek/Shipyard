@@ -72,6 +72,10 @@ func (m *CMStruct) TryAddConnection(conn *websocket.Conn) bool {
 
 	m.connections[conn] = data
 
+	log.Debug().
+		Str("connection-id", id).
+		Msg("[WS] Adding new WS connection")
+
 	go func() {
 		defer m.RemoveConnection(conn)
 

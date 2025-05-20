@@ -6,6 +6,8 @@ func GetDockerCommand(object string, action string, objectId string) []string {
 	var empty = []string{}
 	var base = []string{"docker"}
 
+	var ids = strings.Split(objectId, ",")
+
 	switch object {
 	case "container":
 		permittedActions := []string{"start", "stop", "restart", "remove"}
@@ -14,8 +16,6 @@ func GetDockerCommand(object string, action string, objectId string) []string {
 		if !strings.Contains(permittedActionsJoined, action) {
 			return empty
 		}
-
-		return append(base, object, action, objectId)
 	case "image":
 		permittedActions := []string{"pull", "rm"}
 		permittedActionsJoined := strings.Join(permittedActions, ",")
@@ -23,10 +23,19 @@ func GetDockerCommand(object string, action string, objectId string) []string {
 		if !strings.Contains(permittedActionsJoined, action) {
 			return empty
 		}
-		return append(base, object, action, objectId)
+	case "network":
+		permittedActions := []string{"remove"}
+		permittedActionsJoined := strings.Join(permittedActions, ",")
+
+		if !strings.Contains(permittedActionsJoined, action) {
+			return empty
+		}
 	case "TEST":
-		return []string{"docker", "run", "ubuntu", "bash", "-c", "while true; do sleep 1 && echo Slept; done"}
+		//return append(base, "container", "remove", "221f468ab0c3", "700a4d7b2b60")
+		return empty
 	default:
 		return empty
 	}
+
+	return append(append(base, object, action), ids...)
 }
