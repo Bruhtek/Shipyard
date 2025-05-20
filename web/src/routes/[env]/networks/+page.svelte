@@ -12,6 +12,7 @@
 	import PrettyButton from '$lib/components/fragments/PrettyButton.svelte';
 	import NetworkAction from '$lib/websocket/actions/Network';
 	import Trash from '~icons/ph/trash';
+	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
 
 	let networkData = $state<Network[]>([]);
 	let loading = $state(true);
@@ -33,6 +34,7 @@
 		if (EnvStore.name === '') {
 			return;
 		}
+		TerminalStore.subscribeActionFinished(fetchData);
 
 		fetchData();
 		const interval = setInterval(() => {
@@ -40,6 +42,7 @@
 		}, DATA_FETCHING_INTERVAL);
 
 		return () => {
+			TerminalStore.unsubscribeActionFinished(fetchData);
 			clearInterval(interval);
 		};
 	});

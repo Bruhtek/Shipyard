@@ -22,7 +22,7 @@ export const refreshTerminals = async () => {
 	for (const id of newIds) {
 		const action = data.Actions[id];
 
-		TerminalStore.addTerminal(action);
+		TerminalStore.addOrUpdateTerminal(action);
 	}
 };
 

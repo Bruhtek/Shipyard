@@ -11,6 +11,7 @@
 	import TableHeader from '$lib/components/table/TableHeader.svelte';
 	import { DATA_FETCHING_INTERVAL } from '$lib/consts';
 	import { sortDataByKey } from '$lib/utils/displayUtils';
+	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
 
 	let imageData = $state<Image[]>([]);
 	let loading = $state(true);
@@ -33,12 +34,14 @@
 			return;
 		}
 
+		TerminalStore.subscribeActionFinished(fetchData);
 		fetchData();
 		const interval = setInterval(() => {
 			fetchData();
 		}, DATA_FETCHING_INTERVAL);
 
 		return () => {
+			TerminalStore.unsubscribeActionFinished(fetchData);
 			clearInterval(interval);
 		};
 	});
