@@ -13,6 +13,7 @@
 	import NetworkAction from '$lib/websocket/actions/Network';
 	import Trash from '~icons/ph/trash';
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
+	import NetworkActionButtons from '$lib/components/table/networks/NetworkActionButtons.svelte';
 
 	let networkData = $state<Network[]>([]);
 	let loading = $state(true);
@@ -99,31 +100,12 @@
 		<td>{r.Driver}</td>
 		<td>{r.Scope}</td>
 		<td class="set-width">
-			<PrettyButton
-				hoverBackground="var(--red-a20)"
-				hoverColor="var(--dark-a0)"
-				onclick={() => {
-					NetworkAction(EnvStore.name, 'remove', r.ID);
-				}}
-			>
-				<div class="icon-holder">
-					<Trash width="1.2rem" height="1.2rem" />
-				</div>
-				Remove
-			</PrettyButton>
+			<NetworkActionButtons id={r.ID} name={r.Name} />
 		</td>
 	{/snippet}
 </Table>
 
 <style>
-	.icon-holder {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 1.3rem;
-		height: 1.3rem;
-	}
-
 	td.set-width {
 		width: 2rem;
 		padding: 0;

@@ -71,6 +71,7 @@
 		transition:
 			all 0.2s ease-in-out,
 			opacity 0s linear;
+		white-space: nowrap;
 	}
 	.pretty-button:hover {
 		background: var(--hover-bg, var(--bg, none));

@@ -53,6 +53,29 @@
 		if (query === '') {
 			return containerData;
 		}
+		if (query.includes(':')) {
+			const parts = query.split(' ');
+			return containerData.filter((container) => {
+				return parts.every((part) => {
+					const [key, value] = part.split(':');
+					if (key === 'id') {
+						return container.ID.toLowerCase().startsWith(value.toLowerCase());
+					} else if (key === 'name') {
+						return container.Name.toLowerCase().includes(value.toLowerCase());
+					} else if (key === 'image') {
+						return container.Image.toLowerCase().includes(value.toLowerCase());
+					} else if (key === 'state') {
+						return container.State.toLowerCase().includes(value.toLowerCase());
+					} else if (key === 'network') {
+						return container.Networks.some((network) =>
+							network.toLowerCase().includes(value.toLowerCase())
+						);
+					}
+					return false;
+				});
+			});
+		}
+
 		return containerData.filter((container) => {
 			return (
 				container.Name.toLowerCase().includes(query) ||

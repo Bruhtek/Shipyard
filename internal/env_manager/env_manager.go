@@ -3,6 +3,8 @@ package env_manager
 import (
 	"Shipyard/database"
 	"Shipyard/internal/local_environment"
+	"github.com/rs/zerolog/log"
+	"os"
 	"sync"
 )
 
@@ -45,6 +47,13 @@ func newEnvManager() *EnvManagerStruct {
 	environments := database.LoadEnvironments()
 	for _, env := range environments {
 		if env.EnvType == "local" {
+			if os.Getenv("IGNORE_LOCAL") == "true" {
+				log.Warn().
+					Str("name", env.Name).
+					Msg("IGNORE_LOCAL environment variable is set to true. Skipping creating new local environment")
+				continue
+			}
+
 			envManager.env[env.Name] = local_environment.NewLocalEnv()
 
 			envManager.env[env.Name].SetEnvType(env.EnvType)

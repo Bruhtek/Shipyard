@@ -1,10 +1,30 @@
 <script lang="ts">
 	import MagnifyingGlass from '~icons/ph/magnifying-glass';
+	import { onMount } from 'svelte';
+	import { replaceState } from '$app/navigation';
+	import { page } from '$app/state';
+
 	type Props = {
 		query: string;
 	};
 
 	let { query = $bindable('') }: Props = $props();
+
+	onMount(() => {
+		let url = new URL(window.location.href);
+		if (url.searchParams.has('query')) {
+			query = url.searchParams.get('query') || '';
+		}
+	});
+
+	$effect(() => {
+		if (query.trim() === '') {
+			page.url.searchParams.delete('query');
+		} else {
+			page.url.searchParams.set('query', query);
+		}
+		replaceState(page.url, page.state);
+	});
 </script>
 
 <div class="container">
@@ -38,6 +58,7 @@
 		border-radius: 0.5rem;
 	}
 	.placeholder {
+		pointer-events: none;
 		position: absolute;
 		left: 0.5rem;
 		top: 50%;
