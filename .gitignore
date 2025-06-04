@@ -2,3 +2,5 @@
 tmp/
 
 shipyard.db
+
+.env.dev
