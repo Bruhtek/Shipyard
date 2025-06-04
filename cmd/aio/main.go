@@ -13,15 +13,16 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"os"
 	"time"
 )
 
 func main() {
 	r := chi.NewRouter()
 
-	logger.Init("development")
+	logger.Init(os.Getenv("ENV") == "development")
 	r.Use(logger.HttpLogger)
-
+	
 	database.InitializeDatabase()
 	env_manager.InitializeEnvManager()
 

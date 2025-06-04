@@ -9,13 +9,16 @@ import (
 	"time"
 )
 
-func Init(env string) {
-	if env == "development" {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+func Init(isDev bool) {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	if isDev {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		log.Info().Str("log level", "DBG").Msg("Logger initialized")
 	} else {
-		log.Logger = log.Output(zerolog.New(os.Stderr).With().Timestamp().Logger())
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		log.Info().Str("log level", "INF").Msg("Logger initialized")
 	}
-	log.Info().Msg("Logger initialized")
 }
 
 func HttpLogger(next http.Handler) http.Handler {
