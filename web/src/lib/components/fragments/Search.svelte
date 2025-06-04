@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MagnifyingGlass from '~icons/ph/magnifying-glass';
-	import { onMount } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 
@@ -23,7 +23,13 @@
 		} else {
 			page.url.searchParams.set('query', query);
 		}
-		replaceState(page.url, page.state);
+
+		async function replace() {
+			await tick();
+			replaceState(page.url, page.state);
+		}
+
+		replace();
 	});
 </script>
 

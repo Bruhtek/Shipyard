@@ -92,8 +92,11 @@
 	{#snippet Row(r: Network)}
 		<td>
 			<TruncatedID id={r.ID} />
-			{#if !r.Containers.length}
+			{#if !r.Containers.length && !['bridge', 'host', 'none'].includes(r.Name)}
 				<Badge background="var(--yellow-a20)" color="var(--dark-a0)">Unused</Badge>
+			{/if}
+			{#if ['bridge', 'host', 'none'].includes(r.Name)}
+				<Badge background="var(--green-a20)" color="var(--dark-a0)">Built-in</Badge>
 			{/if}
 		</td>
 		<td>{r.Name}</td>

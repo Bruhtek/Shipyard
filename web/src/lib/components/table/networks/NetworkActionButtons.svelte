@@ -41,16 +41,18 @@
 	<PopupShowButton {id} />
 	{#if popupShown}
 		<Popup {id}>
-			<PrettyButton
-				hoverBackground="var(--red-a20)"
-				hoverColor="var(--dark-a0)"
-				onclick={removeNetwork}
-			>
-				<div class="icon-holder">
-					<Trash width="1.2rem" height="1.2rem" />
-				</div>
-				Remove
-			</PrettyButton>
+			{#if ['bridge', 'host', 'none'].includes(name) === false}
+				<PrettyButton
+					hoverBackground="var(--red-a20)"
+					hoverColor="var(--dark-a0)"
+					onclick={removeNetwork}
+				>
+					<div class="icon-holder">
+						<Trash width="1.2rem" height="1.2rem" />
+					</div>
+					Remove
+				</PrettyButton>
+			{/if}
 			<PrettyButton
 				hoverBackground="var(--primary-a20)"
 				hoverColor="var(--dark-a0)"
