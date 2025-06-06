@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { type Container, TContainerResponse } from '$lib/types/docker/Container';
+	import {
+		type Container,
+		ContainerUpToDate,
+		TContainerResponse
+	} from '$lib/types/docker/Container';
 	import { URLPrefix } from '$lib';
 	import EnvStore from '$lib/stores/EnvStore.svelte';
 	import Table from '$lib/components/table/Table.svelte';
@@ -12,6 +16,7 @@
 	import { DATA_FETCHING_INTERVAL } from '$lib/consts';
 	import { sortDataByKey } from '$lib/utils/displayUtils';
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
+	import ContainerUpToDateStatus from '$lib/components/table/container/ContainerUpToDateStatus.svelte';
 
 	let containerData = $state<Container[]>([]);
 	let loading = $state(true);
@@ -90,6 +95,7 @@
 	const tableColumns: TableColumn[] = [
 		{ label: 'ID', sortable: true },
 		{ label: 'Name', sortable: true },
+		{ label: 'UpToDate', sortable: true },
 		{ label: 'Image', sortable: true },
 		{ label: 'State', sortable: true },
 		{ label: '' }
@@ -108,6 +114,9 @@
 			<TruncatedID id={r.ID} />
 		</td>
 		<td>{r.Name}</td>
+		<td>
+			<ContainerUpToDateStatus state={r.UpToDate} />
+		</td>
 		<td>
 			<ContainerImage image={r.Image} />
 		</td>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MagnifyingGlass from '~icons/ph/magnifying-glass';
-	import { onMount, tick, untrack } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 

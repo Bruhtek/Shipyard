@@ -62,6 +62,38 @@
 		if (query === 'used') {
 			return networkData.filter((network) => network.Containers.length);
 		}
+		if (query.includes(':')) {
+			const parts = query.split(' ');
+			return networkData.filter((network) => {
+				return parts.every((part) => {
+					const [key, value] = part.split(':');
+					if (key === 'id') {
+						return network.ID.toLowerCase().startsWith(value.toLowerCase());
+					} else if (key === 'name') {
+						return network.Name.toLowerCase().includes(value.toLowerCase());
+					} else if (key === 'container') {
+						return network.Containers.some(
+							(container) =>
+								container.Name.toLowerCase().includes(value.toLowerCase()) ||
+								container.ID.toLowerCase().startsWith(value.toLowerCase())
+						);
+					} else if (key === 'status') {
+						if (value === 'unused') {
+							return !network.Containers.length;
+						} else if (value === 'used') {
+							return network.Containers.length > 0;
+						}
+						return false;
+					} else if (key === 'driver') {
+						return network.Driver.toLowerCase().startsWith(value.toLowerCase());
+					} else if (key === 'scope') {
+						return network.Scope.toLowerCase().startsWith(value.toLowerCase());
+					}
+					return false;
+				});
+			});
+		}
+
 		return networkData.filter((network) => {
 			return (
 				network.Name.toLowerCase().includes(query) ||
@@ -92,11 +124,11 @@
 	{#snippet Row(r: Network)}
 		<td>
 			<TruncatedID id={r.ID} />
-			{#if !r.Containers.length && !['bridge', 'host', 'none'].includes(r.Name)}
-				<Badge background="var(--yellow-a20)" color="var(--dark-a0)">Unused</Badge>
-			{/if}
 			{#if ['bridge', 'host', 'none'].includes(r.Name)}
 				<Badge background="var(--green-a20)" color="var(--dark-a0)">Built-in</Badge>
+			{/if}
+			{#if !r.Containers.length}
+				<Badge background="var(--yellow-a20)" color="var(--dark-a0)">Unused</Badge>
 			{/if}
 		</td>
 		<td>{r.Name}</td>

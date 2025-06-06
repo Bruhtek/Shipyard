@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-func ParsePsJson(jsonData []byte) []docker.Container {
+func ParsePsJson(jsonData []byte) []*docker.Container {
 	splitData := strings.Split(string(jsonData), "\n")
-	containers := make([]docker.Container, 0)
+	containers := make([]*docker.Container, 0)
 
 	for _, line := range splitData {
 		if line == "" {
@@ -30,7 +30,7 @@ func ParsePsJson(jsonData []byte) []docker.Container {
 			continue
 		}
 
-		containers = append(containers, container)
+		containers = append(containers, &container)
 	}
 
 	return containers

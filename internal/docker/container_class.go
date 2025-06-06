@@ -21,7 +21,20 @@ type Container struct {
 
 	// from more advanced processing
 	ImageID string
+
+	// for checking up-to-date status using regctl
+	UpToDate        UpToDateStatus
+	LastUpdateCheck time.Time
 }
+
+type UpToDateStatus int
+
+const (
+	Unknown         UpToDateStatus = 0
+	UpToDate        UpToDateStatus = 1
+	UpdateAvailable UpToDateStatus = 2
+	Error           UpToDateStatus = 3
+)
 
 func (c *Container) toJSON() ([]byte, error) {
 	return json.Marshal(c)
