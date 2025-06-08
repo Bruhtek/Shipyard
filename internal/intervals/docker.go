@@ -41,7 +41,12 @@ func SetupScanning() {
 
 func scanEnvs() {
 	envs := env_manager.EnvManager.GetEnvs()
-	for _, env := range envs {
+	for _, envI := range envs {
+		env, ok := envI.(env_manager.LocalEnvironment)
+		if !ok {
+			continue
+		}
+
 		log.Debug().
 			Str("env", env.GetName()).
 			Msg("Scanning environment data")

@@ -3,6 +3,7 @@ package env_manager
 import (
 	"Shipyard/internal/docker"
 	"Shipyard/internal/utils"
+	"github.com/gorilla/websocket"
 )
 
 type EnvInterface interface {
@@ -10,8 +11,11 @@ type EnvInterface interface {
 	SetName(name string)
 
 	GetEnvType() string
-	SetEnvType(envType string)
+	GetEnvDescription() utils.EnvDescription
+}
 
+type LocalEnvironment interface {
+	EnvInterface
 	ScanContainers()
 	GetContainers() map[string]*docker.Container
 	GetContainer(id string) *docker.Container
@@ -26,6 +30,20 @@ type EnvInterface interface {
 	GetNetworks() map[string]*docker.Network
 	GetNetwork(idOrName string) *docker.Network
 	GetNetworkCount() int
+}
 
-	GetEnvDescription() utils.EnvDescription
+type RemoteEnvironment interface {
+	EnvInterface
+	Heartbeat()
+	HasHeartbeat() bool
+
+	Connect(conn *websocket.Conn)
+	IsConnected() bool
+	Disconnect()
+
+	Need()
+	IsNeeded() bool
+
+	GetResponse(path string) ([]byte, error)
+	PostResponse(path string, body string) ([]byte, error)
 }

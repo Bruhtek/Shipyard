@@ -1,17 +1,13 @@
 package main
 
 import (
-	"Shipyard/database"
 	"Shipyard/internal/api/actions"
 	"Shipyard/internal/api/env"
-	"Shipyard/internal/api/remote"
-	"Shipyard/internal/api/websocket"
 	"Shipyard/internal/env_manager"
 	"Shipyard/internal/intervals"
 	"Shipyard/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"
@@ -24,15 +20,7 @@ func main() {
 	logger.Init(os.Getenv("ENV") == "development")
 	r.Use(logger.HttpLogger)
 
-	database.InitializeDatabase()
-	env_manager.InitializeEnvManager(false)
-
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://localhost:*", "http://localhost:*"},
-		AllowCredentials: true,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	}))
+	env_manager.InitializeEnvManager(true)
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Compress(5,
@@ -44,20 +32,18 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	intervals.SetupIntervals()
+	intervals.SetupHeartbeat()
 
 	envRouter := env.GetEnvRouter()
 	actionsRouter := actions.GetActionsRouter()
-	remoteRouter := remote.GetRemoteRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello, World!"))
 	})
-	r.Get("/ws", websocket.HandleWebsocketConnection)
 
 	r.Mount("/api/env", envRouter)
 	r.Mount("/api/actions", actionsRouter)
-	r.Mount("/api/remote", remoteRouter)
 
-	log.Info().Int("port", 4000).Msg("Starting server")
-	http.ListenAndServe(":4000", r)
+	log.Info().Int("port", 4333).Msg("Starting server")
+	http.ListenAndServe(":4333", r)
 }

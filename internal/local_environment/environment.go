@@ -9,8 +9,7 @@ import (
 )
 
 type LocalEnvironment struct {
-	EnvType string
-	Name    string
+	Name string
 
 	containers     map[string]*docker.Container
 	containerMutex sync.RWMutex
@@ -27,16 +26,14 @@ func (e *LocalEnvironment) SetName(name string) {
 	e.Name = name
 }
 func (e *LocalEnvironment) GetEnvType() string {
-	return e.EnvType
-}
-func (e *LocalEnvironment) SetEnvType(envType string) {
-	e.EnvType = envType
+	return "local"
 }
 
 func (e *LocalEnvironment) GetEnvDescription() utils.EnvDescription {
 	return utils.EnvDescription{
-		Name:    e.Name,
-		EnvType: e.EnvType,
+		Name:      e.Name,
+		EnvType:   "local",
+		Connected: true,
 	}
 }
 
@@ -54,8 +51,6 @@ func NewLocalEnv() *LocalEnvironment {
 		Msg("Creating a new local docker environment")
 
 	env := &LocalEnvironment{
-		Name:           "Local",
-		EnvType:        "local",
 		containers:     make(map[string]*docker.Container),
 		containerMutex: sync.RWMutex{},
 	}

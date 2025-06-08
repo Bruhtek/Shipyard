@@ -8,6 +8,7 @@ import (
 	"github.com/regclient/regclient"
 	"github.com/regclient/regclient/types/ref"
 	"github.com/rs/zerolog/log"
+	"os"
 	"strings"
 	"time"
 )
@@ -78,6 +79,11 @@ func (e *LocalEnvironment) ScanContainers() {
 }
 
 func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Container) {
+	// don't spam the docker API with constant update checks during restarts
+	if os.Getenv("ENV") == "development" {
+		return
+	}
+
 	container.LastUpdateCheck = time.Now()
 	rc := regclient.New()
 

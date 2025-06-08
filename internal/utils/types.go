@@ -1,8 +1,9 @@
 package utils
 
 type EnvDescription struct {
-	Name    string
-	EnvType string
+	Name      string
+	EnvType   string
+	Connected bool
 }
 
 type ActionStatus int
