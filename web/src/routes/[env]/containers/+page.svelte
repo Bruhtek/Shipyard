@@ -1,9 +1,5 @@
 <script lang="ts">
-	import {
-		type Container,
-		ContainerUpToDate,
-		TContainerResponse
-	} from '$lib/types/docker/Container';
+	import { type Container, TContainerResponse } from '$lib/types/docker/Container';
 	import { URLPrefix } from '$lib';
 	import EnvStore from '$lib/stores/EnvStore.svelte';
 	import Table from '$lib/components/table/Table.svelte';
@@ -50,11 +46,13 @@
 		};
 	});
 
-	let filter = $state('');
+	let searchQuery = $state('');
 	let sortedBy = $state('Name');
 	let sortedDirection = $state<'asc' | 'desc'>('asc');
+	let filter = $state({});
+
 	let filteredData = $derived.by(() => {
-		let query = filter.trim().toLowerCase();
+		let query = searchQuery.trim().toLowerCase();
 		if (query === '') {
 			return containerData;
 		}
@@ -95,7 +93,12 @@
 	const tableColumns: TableColumn[] = [
 		{ label: 'ID', sortable: true },
 		{ label: 'Name', sortable: true },
-		{ label: 'UpToDate', sortable: true },
+		{
+			label: 'Image status',
+			sortable: true,
+			key: 'UpToDate',
+			filterOptions: ['Checking', 'Up to date', 'Update available', 'Unknown']
+		},
 		{ label: 'Image', sortable: true },
 		{ label: 'State', sortable: true },
 		{ label: '' }
@@ -106,9 +109,16 @@
 	<title>Containers - {EnvStore.name} - Shipyard</title>
 </svelte:head>
 
-<TableHeader title="Containers" bind:query={filter} />
+<TableHeader title="Containers" bind:query={searchQuery} />
 
-<Table columns={tableColumns} data={sortedData} bind:sortedBy bind:sortedDirection {loading}>
+<Table
+	columns={tableColumns}
+	data={sortedData}
+	bind:filter
+	bind:sortedBy
+	bind:sortedDirection
+	{loading}
+>
 	{#snippet Row(r: Container)}
 		<td>
 			<TruncatedID id={r.ID} />

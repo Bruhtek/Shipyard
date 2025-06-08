@@ -31,12 +31,21 @@
 	});
 </script>
 
-{#if isOnlyID}
-	<TruncatedID id={image} />
-{:else if isBothTagAndID}
-	{imageTag}
-	<span class="separator">@</span>
-	<TruncatedID id={imageID} />
-{:else}
-	{image}
-{/if}
+<span class="content">
+	{#if isOnlyID}
+		<TruncatedID id={image} />
+	{:else if isBothTagAndID}
+		{imageTag}
+		<span class="separator">@</span>
+		<TruncatedID id={imageID} />
+	{:else}
+		{image}
+	{/if}
+</span>
+
+<style>
+	.content {
+		word-break: break-all;
+		font-family: monospace;
+	}
+</style>

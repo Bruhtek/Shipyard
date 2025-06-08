@@ -46,6 +46,8 @@
 <style>
 	.sorting-button {
 		transition: all 0.2s ease;
+		width: 100%;
+		flex-shrink: 1;
 	}
 	.sorting-button:not(.active):not(:hover) {
 		opacity: 0.7;

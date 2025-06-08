@@ -17,8 +17,8 @@
 
 <style>
 	.invisible-button {
-		display: flex;
-		width: 100%;
+		width: var(--width, 100%);
+		display: var(--display, flex);
 		gap: 0.5rem;
 		background: none;
 		border: none;
@@ -37,10 +37,10 @@
 		-webkit-user-select: none;
 		-moz-user-select: none;
 		user-select: none;
+		align-content: center;
 	}
 	.center {
 		justify-content: center;
-		align-content: center;
 	}
 	.spaceBetween {
 		justify-content: space-between;

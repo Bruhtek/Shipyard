@@ -51,5 +51,6 @@
 		display: inline-block;
 		width: 1.4rem;
 		height: 1.4rem;
+		flex-shrink: 0;
 	}
 </style>

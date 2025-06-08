@@ -13,12 +13,15 @@ class PopupStoreClass {
 	toggle(popup: string): void {
 		if (this.currentPopup === popup) {
 			this.currentPopup = '';
+			console.debug('Popup closed:', popup);
 		} else {
 			this.currentPopup = popup;
+			console.debug('Popup opened:', popup);
 		}
 	}
 	clear(): void {
 		this.currentPopup = '';
+		console.debug('Popup cleared');
 	}
 }
 

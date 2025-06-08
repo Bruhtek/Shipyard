@@ -3,6 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import SortingButton from '$lib/components/table/SortingButton.svelte';
 	import Shadow from '$lib/components/fragments/Shadow.svelte';
+	import FilterPopup from '$lib/components/table/FilterPopup.svelte';
 
 	type Props = {
 		columns: TableColumn[];
@@ -10,6 +11,7 @@
 		sortedBy: string;
 		sortedDirection: 'asc' | 'desc';
 		loading?: boolean;
+		filter?: object;
 		Row: Snippet<[T]>;
 	};
 
@@ -18,6 +20,7 @@
 		data,
 		sortedBy = $bindable('ID'),
 		sortedDirection = $bindable('asc'),
+		filter = $bindable({}),
 		Row,
 		loading = false
 	}: Props = $props();
@@ -32,19 +35,24 @@
 			<th></th>
 			{#each columns as col (col.label)}
 				<th class="table-header">
-					{#if col.sortable}
-						<SortingButton
-							bind:current={sortedBy}
-							bind:currentDirection={sortedDirection}
-							sortByKey={col.label}
-						>
-							{col.label}
-						</SortingButton>
-					{:else}
-						<span class="unsortable">
-							{col.label}
-						</span>
-					{/if}
+					<div class="header-container">
+						{#if col.sortable}
+							<SortingButton
+								bind:current={sortedBy}
+								bind:currentDirection={sortedDirection}
+								sortByKey={col.key || col.label}
+							>
+								{col.label}
+							</SortingButton>
+						{:else}
+							<span class="unsortable">
+								{col.label}
+							</span>
+						{/if}
+						{#if col.filterOptions}
+							<FilterPopup id={col.key || col.label} />
+						{/if}
+					</div>
 				</th>
 			{/each}
 		</tr>
@@ -115,8 +123,16 @@
 	.table-header {
 		padding: 0.5rem;
 	}
+	.header-container {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+	}
 	.unsortable {
 		opacity: 0.7;
+		text-align: left;
 	}
 
 	.t-row :global(td) {
