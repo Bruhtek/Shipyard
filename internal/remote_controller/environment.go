@@ -3,6 +3,7 @@ package remote_controller
 import (
 	"Shipyard/internal/utils"
 	"github.com/gorilla/websocket"
+	"sync"
 	"time"
 )
 
@@ -15,11 +16,14 @@ type RemoteEnvironment struct {
 	Name string
 	Key  string
 
-	LastHeartbeat time.Time
-	Connection    *websocket.Conn
+	LastHeartbeat  time.Time
+	heartbeatMutex sync.RWMutex
+	Connection     *websocket.Conn
+	connMutex      sync.Mutex
 
 	// time when the environment was last requested by a user
-	LastNeeded time.Time
+	LastNeeded      time.Time
+	lastNeededMutex sync.RWMutex
 }
 
 func (r *RemoteEnvironment) GetName() string {

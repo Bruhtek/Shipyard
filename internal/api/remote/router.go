@@ -9,7 +9,11 @@ import (
 
 func RemoteMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := chi.URLParam(r, "key")
+		key := r.URL.Query().Get("key")
+		if key == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 
 		if env := env_manager.EnvManager.GetRemoteEnv(key); env != nil {
 			ctx := context.WithValue(r.Context(), "env", env)
@@ -25,7 +29,7 @@ func RemoteMiddleware(next http.Handler) http.Handler {
 func GetRemoteRouter() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Route("/{key}", func(r chi.Router) {
+	r.Route("/", func(r chi.Router) {
 		r.Use(RemoteMiddleware)
 
 		r.Get("/heartbeat", func(w http.ResponseWriter, r *http.Request) {

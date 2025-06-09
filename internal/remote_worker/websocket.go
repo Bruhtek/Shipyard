@@ -1,12 +1,25 @@
 package remote_worker
 
 import (
+	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
 	"net/url"
 	"strings"
 )
 
-func ConnectToController(uri string, key string) {
+type ConnectionManager struct {
+	conn *websocket.Conn
+}
+
+var CManager *ConnectionManager = &ConnectionManager{}
+
+func (c *ConnectionManager) ConnectToController(uri string, key string) {
+	if c.conn != nil {
+		return
+	}
+	log.Info().
+		Msg("Controller requested connection")
+
 	protocol := "ws"
 	if strings.HasPrefix(uri, "https") {
 		protocol = "wss"
@@ -15,9 +28,10 @@ func ConnectToController(uri string, key string) {
 	host := uri[strings.Index(uri, "://")+3:]
 
 	u := url.URL{
-		Scheme: protocol,
-		Host:   host,
-		Path:   "/api/remote/" + key + "/ws",
+		Scheme:   protocol,
+		Host:     host,
+		Path:     "/api/remote/ws",
+		RawQuery: "key=" + key,
 	}
 
 	log.Info().
@@ -25,5 +39,47 @@ func ConnectToController(uri string, key string) {
 		Str("path", u.Path).
 		Msg("Connecting to controller")
 
+	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("host", host).
+			Str("path", u.Path).
+			Msg("Unable to connect to controller")
+	}
+
+	c.useConnection(conn)
+
 	return
+}
+
+func (c *ConnectionManager) useConnection(conn *websocket.Conn) {
+	c.conn = conn
+
+	go func() {
+		defer c.Close()
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				log.Error().
+					Err(err).
+					Msg("Unable to read message. Disconnecting from controller")
+				return
+			}
+			c.HandleMessage(message)
+		}
+	}()
+}
+
+func (c *ConnectionManager) Close() {
+	if c.conn != nil {
+		c.conn.Close()
+	}
+	c.conn = nil
+}
+
+func (c *ConnectionManager) HandleMessage(message []byte) {
+	log.Info().
+		Str("message", string(message)).
+		Msg("Received message from controller")
 }

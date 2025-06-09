@@ -43,7 +43,7 @@ func SetupHeartbeat() {
 }
 
 func DoHeartbeat(host string, key string) {
-	resp, err := http.Get(host + "/api/remote/" + key + "/heartbeat")
+	resp, err := http.Get(host + "/api/remote/heartbeat?key=" + key)
 	if err != nil {
 		log.Error().
 			Str("host", host).
@@ -63,10 +63,9 @@ func DoHeartbeat(host string, key string) {
 	}
 
 	if statusCode == http.StatusAccepted {
-		log.Info().
-			Msg("Controller requested connection")
-
-		remote_worker.ConnectToController(host, key)
+		log.Debug().
+			Msg("Successfully sent heartbeat")
+		go remote_worker.CManager.ConnectToController(host, key)
 		return
 	}
 
