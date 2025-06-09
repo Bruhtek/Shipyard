@@ -85,7 +85,7 @@ func (m *CMStruct) TryAddConnection(conn *websocket.Conn) bool {
 				break
 			}
 
-			Handler(data, conn, message)
+			Handler(message)
 		}
 	}()
 	return true

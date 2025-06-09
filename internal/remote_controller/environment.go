@@ -24,6 +24,9 @@ type RemoteEnvironment struct {
 	// time when the environment was last requested by a user
 	LastNeeded      time.Time
 	lastNeededMutex sync.RWMutex
+
+	MessageChannels      map[string]chan []byte
+	messageChannelsMutex sync.RWMutex
 }
 
 func (r *RemoteEnvironment) GetName() string {
@@ -48,7 +51,8 @@ func (r *RemoteEnvironment) GetEnvDescription() utils.EnvDescription {
 
 func NewRemoteEnv(key string) *RemoteEnvironment {
 	env := &RemoteEnvironment{
-		Key: key,
+		Key:             key,
+		MessageChannels: map[string]chan []byte{},
 	}
 
 	return env

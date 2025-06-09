@@ -25,10 +25,12 @@ func GetNetworksRouter() *chi.Mux {
 			res, err := remote.GetResponse(r.URL.Path)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("Error retrieving response from remote"))
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(res)
+			w.WriteHeader(res.Code)
+			w.Write([]byte(res.Body))
 			return
 		}
 
@@ -68,10 +70,12 @@ func GetNetworksRouter() *chi.Mux {
 			res, err := remote.GetResponse(r.URL.Path)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("Error retrieving response from remote"))
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
-			w.Write(res)
+			w.WriteHeader(res.Code)
+			w.Write([]byte(res.Body))
 			return
 		}
 

@@ -43,7 +43,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	intervals.SetupIntervals()
+	intervals.SetupIntervals(false)
 
 	envRouter := env.GetEnvRouter()
 	actionsRouter := actions.GetActionsRouter()

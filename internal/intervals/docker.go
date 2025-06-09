@@ -3,11 +3,12 @@ package intervals
 import (
 	"Shipyard/internal/api/websocket"
 	"Shipyard/internal/env_manager"
+	"Shipyard/internal/remote_worker"
 	"github.com/rs/zerolog/log"
 	"time"
 )
 
-func SetupScanning() {
+func SetupScanning(isRemote bool) {
 	scanEnvs() // initial scan should be done immediately
 
 	go func() {
@@ -22,7 +23,14 @@ func SetupScanning() {
 		for {
 			select {
 			case <-ticker.C:
-				connectionCount := websocket.ConnectionManager.ConnectionCount()
+				connectionCount := 0
+				if !isRemote {
+					connectionCount = websocket.ConnectionManager.ConnectionCount()
+				} else {
+					if remote_worker.CManager.IsConnected() {
+						connectionCount = 1
+					}
+				}
 
 				if connectionCount == 0 {
 					if slowdownCounter < slowdownWhenIdle {

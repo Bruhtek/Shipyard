@@ -2,6 +2,7 @@ package env_manager
 
 import (
 	"Shipyard/internal/docker"
+	"Shipyard/internal/remote_controller"
 	"Shipyard/internal/utils"
 	"github.com/gorilla/websocket"
 )
@@ -44,6 +45,6 @@ type RemoteEnvironment interface {
 	Need()
 	IsNeeded() bool
 
-	GetResponse(path string) ([]byte, error)
-	PostResponse(path string, body string) ([]byte, error)
+	GetResponse(path string) (remote_controller.RequestResponse, error)
+	PostResponse(path string, body string) (remote_controller.RequestResponse, error)
 }

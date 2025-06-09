@@ -1,5 +1,5 @@
 package intervals
 
-func SetupIntervals() {
-	SetupScanning()
+func SetupIntervals(isRemote bool) {
+	SetupScanning(isRemote)
 }

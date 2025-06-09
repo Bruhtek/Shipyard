@@ -5,13 +5,22 @@ import (
 	"github.com/rs/zerolog/log"
 	"net/url"
 	"strings"
+	"sync"
 )
 
 type ConnectionManager struct {
 	conn *websocket.Conn
+
+	writeMutex *sync.Mutex
 }
 
-var CManager *ConnectionManager = &ConnectionManager{}
+var CManager *ConnectionManager = &ConnectionManager{
+	writeMutex: &sync.Mutex{},
+}
+
+func (c *ConnectionManager) IsConnected() bool {
+	return c.conn != nil
+}
 
 func (c *ConnectionManager) ConnectToController(uri string, key string) {
 	if c.conn != nil {
@@ -54,7 +63,9 @@ func (c *ConnectionManager) ConnectToController(uri string, key string) {
 }
 
 func (c *ConnectionManager) useConnection(conn *websocket.Conn) {
+	c.writeMutex.Lock()
 	c.conn = conn
+	c.writeMutex.Unlock()
 
 	go func() {
 		defer c.Close()
@@ -72,14 +83,11 @@ func (c *ConnectionManager) useConnection(conn *websocket.Conn) {
 }
 
 func (c *ConnectionManager) Close() {
+	c.writeMutex.Lock()
+	defer c.writeMutex.Unlock()
+
 	if c.conn != nil {
 		c.conn.Close()
 	}
 	c.conn = nil
-}
-
-func (c *ConnectionManager) HandleMessage(message []byte) {
-	log.Info().
-		Str("message", string(message)).
-		Msg("Received message from controller")
 }

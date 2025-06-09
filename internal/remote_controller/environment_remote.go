@@ -50,6 +50,20 @@ func (r *RemoteEnvironment) Connect(conn *websocket.Conn) {
 			}
 		}
 	}()
+
+	go func() {
+		defer r.Disconnect()
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				log.Error().
+					Err(err).
+					Msg("Unable to read message, disconnecting from worker.")
+				return
+			}
+			r.HandleMessage(message)
+		}
+	}()
 }
 func (r *RemoteEnvironment) IsConnected() bool {
 	r.connMutex.Lock()

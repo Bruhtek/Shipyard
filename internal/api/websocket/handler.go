@@ -4,11 +4,10 @@ import (
 	"Shipyard/internal/env_manager"
 	"Shipyard/internal/terminals"
 	"encoding/json"
-	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
 )
 
-func Handler(data ConnectionData, conn *websocket.Conn, message []byte) {
+func Handler(message []byte) {
 	defer func() {
 		if r := recover(); r != nil {
 			err, ok := r.(error)

@@ -6,7 +6,7 @@ import (
 	"Shipyard/internal/env_manager"
 	"Shipyard/internal/intervals"
 	"Shipyard/internal/logger"
-	"github.com/go-chi/chi/v5"
+	"Shipyard/internal/remote_worker"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	r := chi.NewRouter()
+	r := remote_worker.Router
 
 	logger.Init(os.Getenv("ENV") == "development")
 	r.Use(logger.HttpLogger)
@@ -31,7 +31,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	intervals.SetupIntervals()
+	intervals.SetupIntervals(true)
 	intervals.SetupHeartbeat()
 
 	envRouter := env.GetEnvRouter()
