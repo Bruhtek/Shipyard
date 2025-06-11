@@ -12,10 +12,26 @@ func GetImagesRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		env := r.Context().Value("env").(env_manager.EnvInterface)
+		envI := r.Context().Value("env").(env_manager.EnvInterface)
 
-		if env.GetImageCount() == 0 {
-			env.ScanImages()
+		env, ok := envI.(env_manager.LocalEnvironment)
+		if !ok {
+			remote, ok := envI.(env_manager.RemoteEnvironment)
+			if !ok {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			res, err := remote.GetResponse(r.URL.Path)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("Error retrieving response from remote"))
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(res.Code)
+			w.Write([]byte(res.Body))
+			return
 		}
 
 		images := env.GetImages()

@@ -12,11 +12,13 @@ import (
 )
 
 type Runner struct {
-	Command      []string
-	Ctx          context.Context
-	OutputFn     func(string)
-	OutputMetaFn func(status utils.ActionStatus)
-	DeleteFn     func()
+	Command                 []string
+	Ctx                     context.Context
+	CancelFunc              context.CancelFunc
+	OutputFn                func(string)
+	OutputMetaFn            func(status utils.ActionStatus)
+	DeleteFn                func()
+	RemotelyMarkedForDelete bool
 }
 
 func (r *Runner) Run() {
@@ -32,7 +34,7 @@ func (r *Runner) Run() {
 					Strs("command", r.Command).
 					Msg("[WS] Panic while running command - unable to cast to error")
 			}
-			
+
 			r.OutputFn("\r\n\nError running command\r\n")
 		}
 	}()

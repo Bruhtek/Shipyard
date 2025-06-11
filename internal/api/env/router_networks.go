@@ -12,7 +12,27 @@ func GetNetworksRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		env := r.Context().Value("env").(env_manager.EnvInterface)
+		envI := r.Context().Value("env").(env_manager.EnvInterface)
+
+		env, ok := envI.(env_manager.LocalEnvironment)
+		if !ok {
+			remote, ok := envI.(env_manager.RemoteEnvironment)
+			if !ok {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			res, err := remote.GetResponse(r.URL.Path)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("Error retrieving response from remote"))
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(res.Code)
+			w.Write([]byte(res.Body))
+			return
+		}
 
 		if env.GetNetworkCount() == 0 {
 			env.ScanNetworks()
@@ -37,7 +57,28 @@ func GetNetworksRouter() *chi.Mux {
 	})
 
 	r.Get("/{networkIDorName}", func(w http.ResponseWriter, r *http.Request) {
-		env := r.Context().Value("env").(env_manager.EnvInterface)
+		envI := r.Context().Value("env").(env_manager.EnvInterface)
+
+		env, ok := envI.(env_manager.LocalEnvironment)
+		if !ok {
+			remote, ok := envI.(env_manager.RemoteEnvironment)
+			if !ok {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			res, err := remote.GetResponse(r.URL.Path)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte("Error retrieving response from remote"))
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(res.Code)
+			w.Write([]byte(res.Body))
+			return
+		}
+
 		networkIDOrName := chi.URLParam(r, "networkIDorName")
 
 		if env.GetNetworkCount() == 0 {

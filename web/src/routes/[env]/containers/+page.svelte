@@ -16,9 +16,17 @@
 
 	let containerData = $state<Container[]>([]);
 	let loading = $state(true);
+	let abortController: AbortController | null = null;
 
 	async function fetchData() {
-		const res = await fetch(`${URLPrefix}/api/env/${EnvStore.name}/containers`);
+		if (abortController) {
+			abortController.abort();
+		}
+		abortController = new AbortController();
+
+		const res = await fetch(`${URLPrefix}/api/env/${EnvStore.name}/containers`, {
+			signal: abortController.signal
+		});
 		if (res.ok) {
 			const data = await res.json();
 			const parsed = TContainerResponse.parse(data);

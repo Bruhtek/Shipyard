@@ -2,7 +2,7 @@ package local_environment
 
 import (
 	"Shipyard/internal/docker"
-	"Shipyard/internal/terminals"
+	"Shipyard/internal/terminal_simple"
 	"github.com/rs/zerolog/log"
 )
 
@@ -10,7 +10,7 @@ func (e *LocalEnvironment) ScanNetworks() {
 	e.networkMutex.Lock()
 	defer e.networkMutex.Unlock()
 
-	out, err := terminals.RunSimpleCommand(NetworkLsCommand)
+	out, err := terminal_simple.RunSimpleCommand(NetworkLsCommand)
 	if err != nil {
 		log.Err(err).Msg("Error listing networks")
 		return

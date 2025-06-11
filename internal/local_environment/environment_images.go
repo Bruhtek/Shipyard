@@ -2,7 +2,7 @@ package local_environment
 
 import (
 	"Shipyard/internal/docker"
-	"Shipyard/internal/terminals"
+	"Shipyard/internal/terminal_simple"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"strings"
@@ -19,7 +19,7 @@ func (e *LocalEnvironment) ScanImages() {
 	e.imageMutex.Lock()
 	defer e.imageMutex.Unlock()
 
-	out, err := terminals.RunSimpleCommand("docker image ls --format json --no-trunc")
+	out, err := terminal_simple.RunSimpleCommand("docker image ls --format json --no-trunc")
 	if err != nil {
 		log.Err(err).Msg("Error listing images")
 		return
@@ -37,7 +37,7 @@ func (e *LocalEnvironment) ScanImages() {
 		if ok && currentImage.RepoDigests != nil {
 			images[num].RepoDigests = currentImage.RepoDigests
 		} else {
-			out, err = terminals.RunSimpleCommand(
+			out, err = terminal_simple.RunSimpleCommand(
 				fmt.Sprintf("docker image inspect --format {{.RepoDigests}} %s", image.ID))
 			if err != nil {
 				log.Err(err).
