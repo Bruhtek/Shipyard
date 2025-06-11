@@ -15,6 +15,10 @@ func (c *ConnectionManager) SendResponse(key string, data map[string]interface{}
 		Key:  key,
 		Data: data,
 	}
+	_, ok := data["Body"]
+	if !ok {
+		log.Info().Interface("response", resp).Send()
+	}
 
 	err := c.conn.WriteJSON(resp)
 	if err != nil {

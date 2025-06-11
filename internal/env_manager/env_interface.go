@@ -47,4 +47,10 @@ type RemoteEnvironment interface {
 
 	GetResponse(path string) (remote_controller.RequestResponse, error)
 	PostResponse(path string, body string) (remote_controller.RequestResponse, error)
+
+	SendMessage(message map[string]interface{}, key string) error
+	SendMessageWaitForResponse(key string, messageType string, data map[string]interface{}) (string, error)
+
+	AddMessageChan(key string, channel chan []byte)
+	RemoveMessageChan(key string)
 }

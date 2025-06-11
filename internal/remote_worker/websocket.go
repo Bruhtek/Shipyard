@@ -77,6 +77,7 @@ func (c *ConnectionManager) useConnection(conn *websocket.Conn) {
 					Msg("Unable to read message. Disconnecting from controller")
 				return
 			}
+			println(string(message))
 			c.HandleMessage(message)
 		}
 	}()

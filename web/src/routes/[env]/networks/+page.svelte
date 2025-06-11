@@ -9,17 +9,23 @@
 	import TruncatedID from '$lib/components/table/TruncatedID.svelte';
 	import Table from '$lib/components/table/Table.svelte';
 	import Badge from '$lib/components/fragments/Badge.svelte';
-	import PrettyButton from '$lib/components/fragments/PrettyButton.svelte';
-	import NetworkAction from '$lib/websocket/actions/Network';
-	import Trash from '~icons/ph/trash';
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
 	import NetworkActionButtons from '$lib/components/table/networks/NetworkActionButtons.svelte';
 
 	let networkData = $state<Network[]>([]);
 	let loading = $state(true);
+	let abortController: AbortController | null = null;
 
 	async function fetchData() {
-		const res = await fetch(`${URLPrefix}/api/env/${EnvStore.name}/networks`);
+		if (abortController) {
+			abortController.abort();
+		}
+		abortController = new AbortController();
+
+		const res = await fetch(`${URLPrefix}/api/env/${EnvStore.name}/networks`, {
+			signal: abortController.signal
+		});
+
 		if (res.ok) {
 			const data = await res.json();
 			const parsed = TNetworkResponse.parse(data);

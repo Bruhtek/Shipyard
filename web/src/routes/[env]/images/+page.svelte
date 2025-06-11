@@ -15,9 +15,18 @@
 
 	let imageData = $state<Image[]>([]);
 	let loading = $state(true);
+	let abortController: AbortController | null = null;
 
 	async function fetchData() {
-		const res = await fetch(`${URLPrefix}/api/env/${EnvStore.name}/images`);
+		if (abortController) {
+			abortController.abort();
+		}
+		abortController = new AbortController();
+
+		const res = await fetch(`${URLPrefix}/api/env/${EnvStore.name}/images`, {
+			signal: abortController.signal
+		});
+
 		if (res.ok) {
 			const data = await res.json();
 			const parsed = TImageResponse.parse(data);

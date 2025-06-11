@@ -2,7 +2,7 @@ package local_environment
 
 import (
 	"Shipyard/internal/docker"
-	"Shipyard/internal/terminals"
+	"Shipyard/internal/terminal_simple"
 	"context"
 	"fmt"
 	"github.com/regclient/regclient"
@@ -20,7 +20,7 @@ func (e *LocalEnvironment) ScanContainers() {
 	e.containerMutex.Lock()
 	defer e.containerMutex.Unlock()
 
-	out, err := terminals.RunSimpleCommand("docker ps -a --format json --no-trunc")
+	out, err := terminal_simple.RunSimpleCommand("docker ps -a --format json --no-trunc")
 	if err != nil {
 		log.Err(err).Msg("Error listing containers")
 		return
@@ -34,7 +34,7 @@ func (e *LocalEnvironment) ScanContainers() {
 			// image ID is immutable, so we can skip the relatively expensive inspect command if we already have it
 			containers[id].ImageID = currentContainer.ImageID
 		} else {
-			out, err = terminals.RunSimpleCommand(
+			out, err = terminal_simple.RunSimpleCommand(
 				fmt.Sprintf("docker container inspect --format '{{.Image}}' %s", container.ID))
 			if err != nil {
 				log.Err(err).

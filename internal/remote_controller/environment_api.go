@@ -40,7 +40,7 @@ func (r *RemoteEnvironment) GetResponse(path string) (RequestResponse, error) {
 		"Method": "GET",
 	}
 
-	res, err := r.SendMessageWithData(key, "API", message)
+	res, err := r.SendMessageWaitForResponse(key, "API", message)
 	if err != nil {
 		return RequestResponse{}, err
 	}
@@ -60,7 +60,24 @@ func (r *RemoteEnvironment) PostResponse(path string, body string) (RequestRespo
 		return RequestResponse{}, errors.New("connection timed out")
 	}
 
-	return RequestResponse{}, nil
+	// for remote, the required environment is the local one
+	path = strings.ReplaceAll(path, r.GetName(), "local")
+
+	key := utils.RandString(32)
+	message := map[string]interface{}{
+		"Path":   path,
+		"Method": "POST",
+		"Body":   body,
+	}
+
+	res, err := r.SendMessageWaitForResponse(key, "API", message)
+	if err != nil {
+		return RequestResponse{}, err
+	}
+
+	parsed := parseResponseData(res)
+
+	return parsed, err
 }
 
 func parseResponseData(data string) (res RequestResponse) {

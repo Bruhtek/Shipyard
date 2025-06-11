@@ -1,6 +1,8 @@
 package websocket
 
 import (
+	"Shipyard/internal/env_manager"
+	"Shipyard/internal/logger"
 	"Shipyard/internal/terminals"
 	"Shipyard/internal/utils"
 	"context"
@@ -12,6 +14,7 @@ import (
 type Action struct {
 	// Action description:
 	Environment string
+	IsRemote    bool
 	Object      string
 	Action      string
 	ObjectId    string // optional
@@ -69,12 +72,7 @@ func newAction(cmd []string, env string, obj string, act string, objId string) *
 func (a *Action) Cancel() (res bool) {
 	defer func() {
 		if r := recover(); r != nil {
-			err, ok := r.(error)
-			if ok {
-				log.Err(err).Msg("Panic while cancelling action")
-			} else {
-				log.Error().Msg("Panic while cancelling action - unable to cast to error")
-			}
+			logger.HandleSimpleRecoverPanic(r, "Panic while cancelling action")
 			a.Mutex.Unlock()
 			res = false
 		}
@@ -88,7 +86,6 @@ func (a *Action) Cancel() (res bool) {
 	if a.Status == utils.Running || a.Status == utils.Pending {
 		a.Status = utils.Failed
 		a.FinishedAt = time.Now()
-		return true
 	}
 
 	return true
@@ -97,12 +94,7 @@ func (a *Action) Cancel() (res bool) {
 func (a *Action) Retry() (res bool) {
 	defer func() {
 		if r := recover(); r != nil {
-			err, ok := r.(error)
-			if ok {
-				log.Err(err).Msg("Panic while retrying action")
-			} else {
-				log.Error().Msg("Panic while retrying action - unable to cast to error")
-			}
+			logger.HandleSimpleRecoverPanic(r, "Panic while retrying action")
 			a.Mutex.Unlock()
 			res = false
 		}
@@ -110,22 +102,48 @@ func (a *Action) Retry() (res bool) {
 
 	a.Mutex.Lock()
 	if a.Status != utils.Failed {
+		a.Mutex.Unlock()
+		log.Warn().
+			Strs("cmd", a.Command).
+			Str("action", a.Action).
+			Msg("Trying to retry a non-failed action")
 		return false
 	}
 	a.Ctx, a.CancelFunc = context.WithCancel(context.Background())
 	a.Mutex.Unlock()
 
-	runner := terminals.Runner{
-		Ctx:          a.Ctx,
-		Command:      a.Command,
-		OutputFn:     a.HandleOutput,
-		OutputMetaFn: a.HandleMetadata,
-		DeleteFn:     a.HandleDelete,
+	a.Mutex.RLock()
+	if a.IsRemote {
+		remoteEnv := env_manager.EnvManager.GetEnv(a.Environment)
+		if remoteEnv == nil || remoteEnv.GetEnvType() != "remote" {
+			return false
+		}
+		env := remoteEnv.(env_manager.RemoteEnvironment)
+
+		runner := terminals.RemoteRunner{
+			Command:      a.Command,
+			Ctx:          a.Ctx,
+			CancelFunc:   a.CancelFunc,
+			ID:           a.ActionId,
+			Env:          env,
+			OutputFn:     a.HandleOutput,
+			OutputMetaFn: a.HandleMetadata,
+			DeleteFn:     a.HandleDelete,
+		}
+		go runner.Retry()
+	} else {
+		runner := terminals.Runner{
+			Ctx:          a.Ctx,
+			Command:      a.Command,
+			OutputFn:     a.HandleOutput,
+			OutputMetaFn: a.HandleMetadata,
+			DeleteFn:     a.HandleDelete,
+		}
+		go runner.Run()
 	}
+	a.Mutex.RUnlock()
 
 	a.HandleOutput("\x1b[2J\x1b[H") // this clear the screen
-
-	go runner.Run()
 
 	return true
 }
@@ -162,5 +180,6 @@ func (a *Action) HandleDelete() {
 	if a.Broadcaster != nil {
 		time.Sleep(10 * time.Second)
 		a.Broadcaster.BroadcastMiscFn(a.ActionId, "Removed", true)
+		ActionManager.DeleteFinishedAction(a, 500*time.Millisecond)
 	}
 }

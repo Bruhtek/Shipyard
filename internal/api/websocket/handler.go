@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"Shipyard/internal/env_manager"
+	"Shipyard/internal/logger"
 	"Shipyard/internal/terminals"
 	"encoding/json"
 	"github.com/rs/zerolog/log"
@@ -10,12 +11,7 @@ import (
 func Handler(message []byte) {
 	defer func() {
 		if r := recover(); r != nil {
-			err, ok := r.(error)
-			if ok {
-				log.Err(err).Msg("[WS] Panic while handling message:")
-			} else {
-				log.Err(err).Msg("[WS] Panic while handling message - unable to cast to error")
-			}
+			logger.HandleSimpleRecoverPanic(r, "[WS] Panic while handling message")
 		}
 	}()
 
@@ -48,6 +44,19 @@ func Handler(message []byte) {
 		log.Error().
 			Str("environment", envName).
 			Msg("[WS] Environment not found")
+		return
+	}
+
+	if env.GetEnvType() == "remote" {
+		HandleRemoteAction(env.(env_manager.RemoteEnvironment), objectType, action, objectId)
+		return
+	}
+
+	if env.GetEnvType() != "local" {
+		log.Warn().
+			Str("environment", envName).
+			Str("envType", env.GetEnvType()).
+			Msg("[WS] Invalid environment type")
 		return
 	}
 
@@ -91,4 +100,43 @@ func Handler(message []byte) {
 	ActionManager.createAction(actionObj)
 
 	go runner.Run()
+}
+
+func HandleRemoteAction(env env_manager.RemoteEnvironment, objectType string, action string, objectId string) {
+	log.Info().Msg("Handling remote action")
+
+	cmd := GetDockerCommand(objectType, action, objectId)
+	if len(cmd) == 0 {
+		log.Error().
+			Str("objectType", objectType).
+			Str("action", action).
+			Str("objectId", objectId).
+			Str("envName", env.GetName()).
+			Msg("[WS] Invalid command")
+		return
+	}
+
+	broadcaster := Broadcaster{
+		BroadcastFn:     ConnectionManager.BroadcastActionOutput,
+		BroadcastMetaFn: ConnectionManager.BroadcastActionMetadata,
+		BroadcastMiscFn: ConnectionManager.BroadcastActionMisc,
+	}
+	actionObj := NewBroadcastAction(cmd, &broadcaster, env.GetName(), objectType, action, objectId)
+	actionObj.IsRemote = true
+
+	runner := terminals.RemoteRunner{
+		Command:      cmd,
+		Ctx:          actionObj.Ctx,
+		CancelFunc:   actionObj.CancelFunc,
+		ID:           actionObj.ActionId,
+		Env:          env,
+		OutputFn:     actionObj.HandleOutput,
+		OutputMetaFn: actionObj.HandleMetadata,
+		DeleteFn:     actionObj.HandleDelete,
+	}
+
+	ActionManager.createAction(actionObj)
+
+	go runner.Run()
+
 }

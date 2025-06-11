@@ -82,15 +82,9 @@ func (r *RemoteEnvironment) Disconnect() {
 }
 
 func (r *RemoteEnvironment) Need() {
-	r.connMutex.Lock()
-	defer r.connMutex.Unlock()
-
 	r.LastNeeded = time.Now()
 }
 
 func (r *RemoteEnvironment) IsNeeded() bool {
-	r.connMutex.Lock()
-	defer r.connMutex.Unlock()
-
 	return time.Now().Sub(r.LastNeeded) < NEED_TIMEOUT
 }

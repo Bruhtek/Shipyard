@@ -1,4 +1,4 @@
-package terminals
+package terminal_simple
 
 import (
 	"os/exec"

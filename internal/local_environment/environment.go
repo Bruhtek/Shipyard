@@ -2,7 +2,7 @@ package local_environment
 
 import (
 	"Shipyard/internal/docker"
-	"Shipyard/internal/terminals"
+	"Shipyard/internal/terminal_simple"
 	"Shipyard/internal/utils"
 	"github.com/rs/zerolog/log"
 	"sync"
@@ -39,7 +39,7 @@ func (e *LocalEnvironment) GetEnvDescription() utils.EnvDescription {
 
 func NewLocalEnv() *LocalEnvironment {
 	// test if we can access docker
-	res, err := terminals.RunSimpleCommand("docker -v")
+	res, err := terminal_simple.RunSimpleCommand("docker -v")
 	if err != nil {
 		log.Fatal().Err(err).Msg("Cannot access docker! Check permissions. " +
 			"Is the docker daemon running? If this is intentional (as in: you want " +

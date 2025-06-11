@@ -11,9 +11,14 @@ import (
 func (r *RemoteEnvironment) HandleMessage(message []byte) {
 	r.messageChannelsMutex.RLock()
 	defer r.messageChannelsMutex.RUnlock()
-
+	
 	for _, channel := range r.MessageChannels {
-		channel <- message
+		select {
+		case channel <- message:
+			// message sent
+		default:
+			// no receiver, ignore
+		}
 	}
 }
 
@@ -30,7 +35,8 @@ func (r *RemoteEnvironment) RemoveMessageChan(key string) {
 	delete(r.MessageChannels, key)
 }
 
-func (r *RemoteEnvironment) SendMessageWithData(key string, messageType string, data map[string]interface{}) (string, error) {
+func (r *RemoteEnvironment) SendMessageWaitForResponse(key string, messageType string, data map[string]interface{}) (string, error) {
+	r.Need()
 	type RequestData struct {
 		Key  string
 		Data map[string]interface{}
@@ -62,8 +68,13 @@ func (r *RemoteEnvironment) SendMessageWithData(key string, messageType string, 
 	r.AddMessageChan(key, messageChan)
 	defer r.RemoveMessageChan(key)
 
+	if res := r.waitForConnection(); !res {
+		return "", errors.New("remote connection timed out")
+	}
+
 	r.connMutex.Lock()
 	err = r.Connection.WriteMessage(websocket.TextMessage, marshaled)
+	r.connMutex.Unlock()
 	if err != nil {
 		log.Err(err).
 			Interface("data", req).
@@ -71,7 +82,6 @@ func (r *RemoteEnvironment) SendMessageWithData(key string, messageType string, 
 			Msg("Error sending data to remote")
 		return "", err
 	}
-	r.connMutex.Unlock()
 
 	response := make(chan string)
 	const MAX_MESSAGE_WAIT_TIME = time.Second * 5
@@ -115,4 +125,36 @@ func (r *RemoteEnvironment) SendMessageWithData(key string, messageType string, 
 		return "", errors.New("no response from remote")
 	}
 	return res, nil
+}
+
+func (r *RemoteEnvironment) SendMessage(message map[string]interface{}, key string) error {
+	r.Need()
+
+	message["Key"] = key
+
+	marshaled, err := json.Marshal(message)
+	if err != nil {
+		log.Err(err).
+			Interface("data", message).
+			Str("remote", r.GetName()).
+			Msg("Error marshalling data for remote")
+	}
+
+	if res := r.waitForConnection(); !res {
+		return errors.New("remote connection timed out")
+	}
+
+	r.connMutex.Lock()
+	defer r.connMutex.Unlock()
+
+	err = r.Connection.WriteMessage(websocket.TextMessage, marshaled)
+	if err != nil {
+		log.Err(err).
+			Interface("data", message).
+			Str("remote", r.GetName()).
+			Msg("Error sending data to remote")
+		return err
+	}
+
+	return nil
 }

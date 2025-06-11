@@ -3,8 +3,6 @@
 	import InvisibleButton from '$lib/components/fragments/InvisibleButton.svelte';
 	import PopupStore from '$lib/stores/CurrentPopup.svelte';
 	import Popup from '$lib/components/fragments/Popup/Popup.svelte';
-	import PrettyButton from '$lib/components/fragments/PrettyButton.svelte';
-	import Play from '~icons/ph/play';
 
 	type Props = {
 		id: string;
