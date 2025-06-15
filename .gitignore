@@ -1,7 +1,13 @@
 
 tmp/
+build/
 
 shipyard.db
 
 .env.dev
 .env*.dev
+.idea/sshConfigs.xml
+
+.idea/remote-targets.xml
+
+.idea/

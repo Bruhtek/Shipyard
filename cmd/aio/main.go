@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Shipyard"
 	"Shipyard/database"
 	"Shipyard/internal/api/actions"
 	"Shipyard/internal/api/env"
@@ -9,14 +10,18 @@ import (
 	"Shipyard/internal/env_manager"
 	"Shipyard/internal/intervals"
 	"Shipyard/internal/logger"
+	"embed"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/rs/zerolog/log"
+	"io/fs"
 	"net/http"
 	"os"
 	"time"
 )
+
+var staticWebContent embed.FS = Shipyard.WebContent
 
 func main() {
 	r := chi.NewRouter()
@@ -27,12 +32,14 @@ func main() {
 	database.InitializeDatabase()
 	env_manager.InitializeEnvManager(false)
 
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://localhost:*", "http://localhost:*"},
-		AllowCredentials: true,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	}))
+	if os.Getenv("ENV") == "development" {
+		r.Use(cors.Handler(cors.Options{
+			AllowedOrigins:   []string{"https://localhost:*", "http://localhost:*"},
+			AllowCredentials: true,
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			MaxAge:           300, // Maximum value not ignored by any of major browsers
+		}))
+	}
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Compress(5,
@@ -58,6 +65,20 @@ func main() {
 	r.Mount("/api/actions", actionsRouter)
 	r.Mount("/api/remote", remoteRouter)
 
+	content, err := fs.Sub(staticWebContent, "web/build")
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load embedded web files")
+	}
+
+	staticServer := http.FileServer(http.FS(content))
+	r.Handle("/", staticServer)
+	r.Handle("/favicon.ico", staticServer)
+	r.Handle("/_app/*", staticServer)
+
+	r.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = "/" // Replace the request path
+		staticServer.ServeHTTP(w, r)
+	})
 	log.Info().Int("port", 4000).Msg("Starting server")
 	http.ListenAndServe(":4000", r)
 }

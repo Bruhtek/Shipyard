@@ -15,6 +15,7 @@ import (
 
 const UPDATE_CHECK_COOLDOWN = time.Hour * 2
 const ERROR_UPDATE_CHECK_COOLDOWN = UPDATE_CHECK_COOLDOWN / 2
+const MAX_CHECKS_PER_SCAN = 10
 
 func (e *LocalEnvironment) ScanContainers() {
 	e.containerMutex.Lock()
@@ -25,6 +26,8 @@ func (e *LocalEnvironment) ScanContainers() {
 		log.Err(err).Msg("Error listing containers")
 		return
 	}
+
+	updateCheckCount := 0
 
 	containers := ParsePsJson([]byte(out))
 	for id, container := range containers {
@@ -47,6 +50,10 @@ func (e *LocalEnvironment) ScanContainers() {
 		}
 		//#endregion
 
+		if updateCheckCount >= MAX_CHECKS_PER_SCAN {
+			continue
+		}
+
 		if ok {
 			shouldUpdate := true
 			if currentContainer.UpToDate == docker.UpdateAvailable {
@@ -62,12 +69,14 @@ func (e *LocalEnvironment) ScanContainers() {
 			}
 
 			if shouldUpdate {
+				updateCheckCount++
 				e.checkContainerUpdateStatus(containers[id])
 			} else {
 				containers[id].LastUpdateCheck = currentContainer.LastUpdateCheck
 				containers[id].UpToDate = currentContainer.UpToDate
 			}
 		} else {
+			updateCheckCount++
 			e.checkContainerUpdateStatus(containers[id])
 		}
 	}
