@@ -8,14 +8,13 @@ import (
 	"github.com/regclient/regclient"
 	"github.com/regclient/regclient/types/ref"
 	"github.com/rs/zerolog/log"
-	"os"
 	"strings"
 	"time"
 )
 
 const UPDATE_CHECK_COOLDOWN = time.Hour * 2
 const ERROR_UPDATE_CHECK_COOLDOWN = UPDATE_CHECK_COOLDOWN / 2
-const MAX_CHECKS_PER_SCAN = 10
+const MAX_CHECKS_PER_SCAN = 5
 
 func (e *LocalEnvironment) ScanContainers() {
 	e.containerMutex.Lock()
@@ -88,10 +87,10 @@ func (e *LocalEnvironment) ScanContainers() {
 }
 
 func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Container) {
-	// don't spam the docker API with constant update checks during restarts
-	if os.Getenv("ENV") == "development" {
-		return
-	}
+	//// don't spam the docker API with constant update checks during restarts
+	//if os.Getenv("ENV") == "development" {
+	//	return
+	//}
 
 	container.LastUpdateCheck = time.Now()
 	rc := regclient.New()

@@ -115,3 +115,14 @@ func ParseNetworkLsJson(jsonData *string) []docker.Network {
 
 	return networks
 }
+
+func ParseComposeJson(jsonData *string) []*docker.Stack {
+	stacks := make([]*docker.Stack, 0)
+	err := json.Unmarshal([]byte(*jsonData), &stacks)
+	if err != nil {
+		log.Err(err).Msg("Error parsing compose json")
+		return nil
+	}
+
+	return stacks
+}

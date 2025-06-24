@@ -31,6 +31,11 @@ type LocalEnvironment interface {
 	GetNetworks() map[string]*docker.Network
 	GetNetwork(idOrName string) *docker.Network
 	GetNetworkCount() int
+
+	ScanStacks()
+	GetStacks() map[string]*docker.Stack
+	GetStack(idOrName string) *docker.Stack
+	GetStackCount() int
 }
 
 type RemoteEnvironment interface {

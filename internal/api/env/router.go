@@ -59,10 +59,12 @@ func GetEnvRouter() *chi.Mux {
 	containerRouter := GetContainersRouter()
 	imagesRouter := GetImagesRouter()
 	networkRouter := GetNetworksRouter()
+	stackRouter := GetStacksRouter()
 
 	r.Route("/{environment}", func(r chi.Router) {
 		r.Use(EnvironmentMiddleware)
 
+		r.Mount("/stacks", stackRouter)
 		r.Mount("/containers", containerRouter)
 		r.Mount("/images", imagesRouter)
 		r.Mount("/networks", networkRouter)

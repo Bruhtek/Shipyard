@@ -17,6 +17,8 @@ type LocalEnvironment struct {
 	imageMutex     sync.RWMutex
 	networks       map[string]*docker.Network
 	networkMutex   sync.RWMutex
+	stacks         map[string]*docker.Stack
+	stackMutex     sync.RWMutex
 }
 
 func (e *LocalEnvironment) GetName() string {
