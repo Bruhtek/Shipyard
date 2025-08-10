@@ -3,11 +3,9 @@ package main
 import (
 	"Shipyard"
 	"Shipyard/database"
-	"Shipyard/internal/api/actions"
-	"Shipyard/internal/api/env"
-	"Shipyard/internal/api/remote"
-	"Shipyard/internal/api/websocket"
-	"Shipyard/internal/env_manager"
+	"Shipyard/internal/actions"
+	"Shipyard/internal/environments"
+	"Shipyard/internal/environments/remote_router"
 	"Shipyard/internal/intervals"
 	"Shipyard/internal/logger"
 	"embed"
@@ -30,7 +28,7 @@ func main() {
 	r.Use(logger.HttpLogger)
 
 	database.InitializeDatabase()
-	env_manager.InitializeEnvManager(false)
+	environments.InitializeEnvManager(false)
 
 	if os.Getenv("ENV") == "development" {
 		r.Use(cors.Handler(cors.Options{
@@ -52,14 +50,14 @@ func main() {
 
 	intervals.SetupIntervals(false)
 
-	envRouter := env.GetEnvRouter()
+	envRouter := environments.GetEnvRouter()
 	actionsRouter := actions.GetActionsRouter()
-	remoteRouter := remote.GetRemoteRouter()
+	remoteRouter := remote_router.GetRemoteRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello, World!"))
 	})
-	r.Get("/ws", websocket.HandleWebsocketConnection)
+	r.Get("/ws", actions.HandleWebsocketConnection)
 
 	r.Mount("/api/env", envRouter)
 	r.Mount("/api/actions", actionsRouter)

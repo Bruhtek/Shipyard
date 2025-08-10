@@ -1,9 +1,8 @@
 package main
 
 import (
-	"Shipyard/internal/api/actions"
-	"Shipyard/internal/api/env"
-	"Shipyard/internal/env_manager"
+	"Shipyard/internal/actions"
+	"Shipyard/internal/environments"
 	"Shipyard/internal/intervals"
 	"Shipyard/internal/logger"
 	"Shipyard/internal/remote_worker"
@@ -20,7 +19,7 @@ func main() {
 	logger.Init(os.Getenv("ENV") == "development")
 	r.Use(logger.HttpLogger)
 
-	env_manager.InitializeEnvManager(true)
+	environments.InitializeEnvManager(true)
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Compress(5,
@@ -34,7 +33,7 @@ func main() {
 	intervals.SetupIntervals(true)
 	intervals.SetupHeartbeat()
 
-	envRouter := env.GetEnvRouter()
+	envRouter := environments.GetEnvRouter()
 	actionsRouter := actions.GetActionsRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
