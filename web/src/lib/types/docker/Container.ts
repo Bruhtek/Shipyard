@@ -13,7 +13,8 @@ export enum ContainerUpToDate {
 	Unknown = 0,
 	UpToDate = 1,
 	UpdateAvailable = 2,
-	Error = 3
+	Error = 3,
+	Pinned = 4,
 }
 
 export type ContainerState = z.infer<typeof TContainerState>;

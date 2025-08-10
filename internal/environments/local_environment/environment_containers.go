@@ -20,7 +20,7 @@ func (e *LocalEnvironment) ScanContainers() {
 	e.containerMutex.Lock()
 	defer e.containerMutex.Unlock()
 
-	out, err := terminals.RunSimpleCommand("docker ps -a --format json --no-trunc")
+	out, err := terminals.RunSimpleCommand(ContainerLsCommand)
 	if err != nil {
 		log.Err(err).Msg("Error listing containers")
 		return
@@ -58,11 +58,11 @@ func (e *LocalEnvironment) ScanContainers() {
 			if currentContainer.UpToDate == docker.UpdateAvailable {
 				shouldUpdate = false
 			}
-			if currentContainer.UpToDate != docker.Unknown &&
+			if currentContainer.UpToDate != docker.Pending &&
 				time.Since(currentContainer.LastUpdateCheck) < UPDATE_CHECK_COOLDOWN {
 				shouldUpdate = false
 			}
-			if currentContainer.UpToDate == docker.Error &&
+			if currentContainer.UpToDate == docker.Unknown &&
 				time.Since(currentContainer.LastUpdateCheck) >= ERROR_UPDATE_CHECK_COOLDOWN {
 				shouldUpdate = true
 			}
@@ -87,43 +87,173 @@ func (e *LocalEnvironment) ScanContainers() {
 }
 
 func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Container) {
-	//// don't spam the docker API with constant update checks during restarts
-	//if os.Getenv("ENV") == "development" {
-	//	return
-	//}
-
 	container.LastUpdateCheck = time.Now()
-	rc := regclient.New()
+	if strings.Contains(container.Image, "@sha256:") {
+		// container image is pinned to a specific digest, no need to check for updates
+		container.UpToDate = docker.Pinned
+		return
+	}
 
-	imageRef, err := ref.New(container.Image)
-	if err != nil {
-		log.Err(err).Msg("Error while checking container update status: Error parsing image ref")
-		container.UpToDate = docker.Error
+	imageId := container.ImageID
+	if imageId == "" {
+		log.Warn().
+			Str("container-id", container.ID).
+			Str("container-name", container.Name).
+			Msg("Container has no image ID, cannot check for updates")
+		container.UpToDate = docker.Unknown
+		return
+	}
+
+	image := e.GetImage(imageId)
+	if image == nil {
+		log.Warn().
+			Str("container-id", container.ID).
+			Str("container-name", container.Name).
+			Msg("Container image not found, cannot check for updates")
+		return
+	}
+	if image.RepoDigests == nil {
+		log.Warn().
+			Str("container-id", container.ID).
+			Str("container-name", container.Name).
+			Msg("Container image has no repo digests, cannot check for updates")
+		return
+	}
+
+	if len(image.RepoDigests) == 0 {
+		// debug, not warn, since this can happen with some images - local only, for example
+		log.Debug().
+			Str("container-id", container.ID).
+			Str("container-name", container.Name).
+			Msg("Container image has no repo digests, cannot check for updates")
+		container.UpToDate = docker.Unknown
 		return
 	}
 
 	ctx := context.Background()
-	manifest, err := rc.ManifestHead(ctx, imageRef)
+	rc := regclient.New()
+
+	r, err := ref.New(container.Image)
 	if err != nil {
-		log.Err(err).Msg("Error while checking container update status: Error getting manifest")
-		container.UpToDate = docker.Error
+		log.Err(err).
+			Str("container-id", container.ID).
+			Str("container-name", container.Name).
+			Str("image", container.Image).
+			Msg("Error while checking container update status: Error parsing image ref")
+		container.UpToDate = docker.Unknown
 		return
 	}
 
-	defer rc.Close(ctx, imageRef)
+	defer rc.Close(ctx, r)
 
-	manifestDigest := manifest.GetDescriptor().Digest.String()
+	manifest, err := rc.ManifestHead(ctx, r, regclient.WithManifestRequireDigest())
+	if err != nil {
+		log.Err(err).
+			Str("container-id", container.ID).
+			Str("container-name", container.Name).
+			Str("image", container.Image).
+			Msg("Error while checking container update status: Error getting manifest")
+		container.UpToDate = docker.Unknown
+		return
+	}
+
+	digests := make([]string, 0)
+
+	if manifest.IsList() {
+		fullManifest, err := rc.ManifestGet(ctx, r)
+		if err != nil {
+			log.Err(err).
+				Str("container-id", container.ID).
+				Str("container-name", container.Name).
+				Str("image", container.Image).
+				Msg("Error while checking container update status: Error getting full manifest")
+			container.UpToDate = docker.Unknown
+			return
+		}
+
+		manifests, err := fullManifest.GetManifestList()
+		if err != nil {
+			log.Err(err).
+				Str("container-id", container.ID).
+				Str("container-name", container.Name).
+				Str("image", container.Image).
+				Msg("Error while checking container update status: Error getting manifest list")
+			container.UpToDate = docker.Unknown
+			return
+		}
+		for _, m := range manifests {
+			digests = append(digests, m.Digest.String())
+		}
+	}
+
+	digests = append(digests, manifest.GetDescriptor().Digest.String())
 
 	log.Debug().
-		Str("manifest-digest", manifestDigest).
-		Str("image-id", container.ImageID).
+		Str("container-id", container.ID).
+		Str("container-name", container.Name).
+		Strs("digests", digests).
+		Str("image", container.Image).
+		Strs("repo-digests", image.RepoDigests).
 		Msg("Checking container update status")
 
-	if manifestDigest == container.ImageID {
+	isInDigests := false
+	for _, digest := range image.RepoDigests {
+		for _, mDigest := range digests {
+			if strings.Contains(digest, mDigest) {
+				isInDigests = true
+				break
+			}
+		}
+		if isInDigests {
+			break
+		}
+	}
+	if isInDigests {
+		log.Debug().
+			Str("container-id", container.ID).
+			Str("container-name", container.Name).
+			Str("image", container.Image).
+			Msg("Container is up to date")
 		container.UpToDate = docker.UpToDate
 	} else {
+		log.Debug().
+			Str("container-id", container.ID).
+			Str("container-name", container.Name).
+			Str("image", container.Image).
+			Msg("Container has update available")
 		container.UpToDate = docker.UpdateAvailable
 	}
+
+	//imageRef, err := ref.New(container.Image)
+	//if err != nil {
+	//	log.Err(err).Msg("Error while checking container update status: Error parsing image ref")
+	//	container.UpToDate = docker.Error
+	//	return
+	//}
+	//
+	//ctx := context.Background()
+	//manifest, err := rc.ManifestHead(ctx, imageRef)
+	//if err != nil {
+	//	log.Err(err).Msg("Error while checking container update status: Error getting manifest")
+	//	container.UpToDate = docker.Error
+	//	return
+	//}
+	//
+	//defer rc.Close(ctx, imageRef)
+	//
+	//manifestDigest := manifest.GetDescriptor().Digest.String()
+	//
+	//log.Debug().
+	//	Str("manifest-digest", manifestDigest).
+	//	Str("image-id", container.ImageID).
+	//	Msg("Checking container update status")
+	//
+	//if manifestDigest == container.ImageID {
+	//	container.UpToDate = docker.UpToDate
+	//} else {
+	//	container.UpToDate = docker.UpdateAvailable
+	//}
+
 }
 
 func (e *LocalEnvironment) GetContainers() map[string]*docker.Container {

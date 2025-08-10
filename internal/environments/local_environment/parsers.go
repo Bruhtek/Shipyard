@@ -3,10 +3,46 @@ package local_environment
 import (
 	"Shipyard/internal/docker"
 	"encoding/json"
+	"errors"
 	"github.com/rs/zerolog/log"
 	"strings"
 	"time"
 )
+
+func parseLabels(labelsStr string) (map[string]string, error) {
+	labels := make(map[string]string)
+	if labelsStr != "" {
+		splitLabels := strings.Split(labelsStr, ",")
+		prevLabelKey := ""
+
+		for _, label := range splitLabels {
+			labelSplit := strings.Split(label, "=")
+			if len(labelSplit) == 2 {
+				labels[labelSplit[0]] = labelSplit[1]
+				prevLabelKey = labelSplit[0]
+			} else if len(labelSplit) == 1 {
+				previousValue, exists := labels[prevLabelKey]
+				if exists {
+					// If there is no = sign, we assume it's a continuation of the previous label's value
+					// This is a workaround for labels that might not be formatted correctly
+					labels[prevLabelKey] = previousValue + "," + labelSplit[0]
+				} else {
+					log.Error().Str("label", label).Msg("Invalid label format without key")
+					return make(map[string]string), errors.New("invalid label format without key")
+				}
+			} else {
+				log.Error().Str("label", label).Msg("Invalid label format")
+				return make(map[string]string), errors.New("invalid label format")
+			}
+		}
+	} else {
+		return labels, nil
+	}
+
+	return labels, nil
+}
+
+const ContainerLsCommand = "docker container ls -a --no-trunc --format {{.ID}}\t{{.Image}}\t{{.Labels}}\t{{.Names}}\t{{.Networks}}\t{{.Ports}}\t{{.State}}\t{{.Status}}\t{{.CreatedAt}}\t{{.Command}}"
 
 func ParsePsJson(jsonData []byte) []*docker.Container {
 	splitData := strings.Split(string(jsonData), "\n")
@@ -17,20 +53,47 @@ func ParsePsJson(jsonData []byte) []*docker.Container {
 			continue
 		}
 
-		tempContainer := docker.TempContainer{}
-		err := json.Unmarshal([]byte(line), &tempContainer)
+		splitLine := strings.Split(line, "\t")
+		if len(splitLine) < 10 {
+			log.Error().Str("line", line).Msg("Invalid container data")
+			continue
+		}
+		createdAt, err := time.Parse("2006-01-02 15:04:05 -0700 MST", splitLine[8])
 		if err != nil {
-			log.Err(err).Msg("Error parsing container from JSON")
+			log.Err(err).Str("createdAt", splitLine[8]).Msg("Error parsing createdAt time")
 			continue
 		}
 
-		container, err := tempContainer.ToContainer()
+		labels, err := parseLabels(splitLine[2])
 		if err != nil {
-			log.Err(err).Msg("Error converting temp container to container")
+			log.Err(err).Str("labels", splitLine[2]).Msg("Error parsing labels")
 			continue
 		}
 
-		containers = append(containers, &container)
+		names := strings.Split(splitLine[3], ",")
+		name := names[0]
+
+		networks := strings.Split(splitLine[4], ",")
+		ports := strings.Split(splitLine[5], ", ")
+
+		container := &docker.Container{
+			ID:              splitLine[0],
+			Image:           splitLine[1],
+			Labels:          labels,
+			Name:            name,
+			Names:           names,
+			Ports:           ports,
+			Networks:        networks,
+			State:           splitLine[6],
+			Status:          splitLine[7],
+			CreatedAt:       createdAt,
+			Command:         strings.Trim(splitLine[9], "\""),
+			ImageID:         "",
+			UpToDate:        0,
+			LastUpdateCheck: time.Time{},
+		}
+
+		containers = append(containers, container)
 	}
 
 	return containers
@@ -86,18 +149,7 @@ func ParseNetworkLsJson(jsonData *string) []docker.Network {
 			continue
 		}
 
-		labels := make(map[string]string)
-		if splitLine[7] != "" {
-			splitLabels := strings.Split(splitLine[7], ",")
-			for _, label := range splitLabels {
-				labelSplit := strings.Split(label, "=")
-				if len(labelSplit) == 2 {
-					labels[labelSplit[0]] = labelSplit[1]
-				} else {
-					log.Error().Str("label", label).Msg("Invalid label format")
-				}
-			}
-		}
+		labels, err := parseLabels(splitLine[7])
 
 		network := docker.Network{
 			ID:        splitLine[0],

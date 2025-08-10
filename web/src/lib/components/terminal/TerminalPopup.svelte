@@ -30,5 +30,6 @@
 		flex-direction: column;
 		align-items: flex-end;
 		gap: 0.5rem;
+		z-index: 10000;
 	}
 </style>

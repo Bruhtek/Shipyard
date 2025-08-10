@@ -35,6 +35,7 @@ func (e *LocalEnvironment) ScanImages() {
 	for num, image := range images {
 		currentImage, ok := e.images[image.ID]
 		if ok && currentImage.RepoDigests != nil {
+			// repo digests are immutable, so we can skip the relatively expensive inspect command if we already have it
 			images[num].RepoDigests = currentImage.RepoDigests
 		} else {
 			out, err = terminals.RunSimpleCommand(
