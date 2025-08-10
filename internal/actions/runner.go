@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"io"
 	"os/exec"
+	"strings"
 )
 
 type Runner struct {
@@ -40,6 +41,8 @@ func (r *Runner) Run() {
 	cmd := exec.CommandContext(r.Ctx, r.Command[0], r.Command[1:]...)
 
 	r.OutputMetaFn(Pending)
+	commandString := strings.Join(r.Command, " ")
+	r.OutputFn("$ " + commandString + "\r\n")
 
 	f, err := pty.Start(cmd)
 	if err != nil {
