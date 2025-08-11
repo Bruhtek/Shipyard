@@ -5,11 +5,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type EnvType string
+
+const (
+	EnvTypeLocal  EnvType = "local"
+	EnvTypeRemote EnvType = "remote"
+)
+
 type EnvInterface interface {
 	GetName() string
 	SetName(name string)
 
-	GetEnvType() string
+	GetEnvType() EnvType
 	GetEnvDescription() EnvDescription
 }
 

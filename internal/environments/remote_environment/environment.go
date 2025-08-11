@@ -37,7 +37,7 @@ func (r *RemoteEnvironment) SetName(name string) {
 	r.Name = name
 }
 
-func (r *RemoteEnvironment) GetEnvType() string {
+func (r *RemoteEnvironment) GetEnvType() types.EnvType {
 	return "remote"
 }
 

@@ -15,6 +15,11 @@ func EnvironmentMiddleware(next http.Handler) http.Handler {
 		envName := chi.URLParam(r, "environment")
 
 		if env := EnvManager.GetEnv(envName); env != nil {
+			if env.GetEnvType() == types.EnvTypeRemote {
+				HandleRemoteEnvironmentsMiddleware(next, env.(types.RemoteEnvironment)).ServeHTTP(w, r)
+				return
+			}
+
 			ctx := context.WithValue(r.Context(), "env", env)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -22,6 +27,21 @@ func EnvironmentMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Environment not found", http.StatusNotFound)
 			return
 		}
+	})
+}
+
+func HandleRemoteEnvironmentsMiddleware(next http.Handler, env types.RemoteEnvironment) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		res, err := env.GetResponse(r.URL.Path)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Error retrieving response from remote"))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(res.Code)
+		w.Write([]byte(res.Body))
+		return
 	})
 }
 

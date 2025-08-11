@@ -55,7 +55,7 @@ func Handler(message []byte) {
 	if env.GetEnvType() != "local" {
 		log.Warn().
 			Str("environment", envName).
-			Str("envType", env.GetEnvType()).
+			Str("envType", string(env.GetEnvType())).
 			Msg("[WS] Invalid environment type")
 		return
 	}

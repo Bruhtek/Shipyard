@@ -12,25 +12,9 @@ func GetStacksRouter() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		envI := r.Context().Value("env").(types.EnvInterface)
-
-		env, ok := envI.(types.LocalEnvironment)
+		env, ok := r.Context().Value("env").(types.LocalEnvironment)
 		if !ok {
-			remote, ok := envI.(types.RemoteEnvironment)
-			if !ok {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			res, err := remote.GetResponse(r.URL.Path)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte("Error retrieving response from remote"))
-				return
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(res.Code)
-			w.Write([]byte(res.Body))
+			http.Error(w, "Environment not found or not a local environment", http.StatusNotFound)
 			return
 		}
 

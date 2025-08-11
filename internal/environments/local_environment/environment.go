@@ -27,7 +27,7 @@ func (e *LocalEnvironment) GetName() string {
 func (e *LocalEnvironment) SetName(name string) {
 	e.Name = name
 }
-func (e *LocalEnvironment) GetEnvType() string {
+func (e *LocalEnvironment) GetEnvType() types.EnvType {
 	return "local"
 }
 
