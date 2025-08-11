@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 )
@@ -13,6 +14,12 @@ import (
 func EnvironmentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		envName := chi.URLParam(r, "environment")
+		// decode the environment name to handle any URL encoding
+		envName, err := url.QueryUnescape(envName)
+		if err != nil {
+			http.Error(w, "Invalid environment name", http.StatusBadRequest)
+			return
+		}
 
 		if env := EnvManager.GetEnv(envName); env != nil {
 			if env.GetEnvType() == types.EnvTypeRemote {
