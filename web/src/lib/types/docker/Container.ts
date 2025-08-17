@@ -10,11 +10,11 @@ export const TContainerState = z.enum([
 ]);
 
 export enum ContainerUpToDate {
-	Unknown = 0,
+	Pending = 0,
 	UpToDate = 1,
 	UpdateAvailable = 2,
-	Error = 3,
-	Pinned = 4,
+	Unknown = 3,
+	Pinned = 4
 }
 
 export type ContainerState = z.infer<typeof TContainerState>;
@@ -32,7 +32,7 @@ export const TContainer = z.object({
 	CreatedAt: z.string().datetime({ offset: true }),
 	Command: z.string(),
 
-	UpToDate: z.nativeEnum(ContainerUpToDate).default(ContainerUpToDate.Unknown),
+	UpToDate: z.nativeEnum(ContainerUpToDate).default(ContainerUpToDate.Pending),
 	LastUpdateCheck: z.string().datetime({ offset: true })
 });
 

@@ -7,4 +7,6 @@ type Stack struct {
 
 	Containers []*Container
 	Networks   []*Network
+
+	UpToDate UpToDateStatus
 }

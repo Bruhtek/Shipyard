@@ -6,13 +6,19 @@
 	import type { TableColumn } from '$lib/types/Table';
 	import TruncatedID from '$lib/components/table/TruncatedID.svelte';
 	import ContainerState from '$lib/components/table/container/ContainerState.svelte';
-	import ContainerActionButtons from '$lib/components/table/container/ContainerActionButtons.svelte';
 	import ContainerImage from '$lib/components/table/container/ContainerImage.svelte';
 	import TableHeader from '$lib/components/table/TableHeader.svelte';
 	import { DATA_FETCHING_INTERVAL } from '$lib/consts';
 	import { sortDataByKey } from '$lib/utils/displayUtils';
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
 	import ContainerUpToDateStatus from '$lib/components/table/container/ContainerUpToDateStatus.svelte';
+	import PopupActionButton from '$lib/components/table/actionButtons/PopupActionButton.svelte';
+	import type { ActionData } from '$lib/components/table/actionButtons/ActionData';
+	import ContainerAction from '$lib/websocket/actions/Container';
+	import Play from '~icons/ph/play';
+	import ArrowsClockwise from '~icons/ph/arrows-clockwise';
+	import Stop from '~icons/ph/stop';
+	import Trash from '~icons/ph/trash';
 
 	let containerData = $state<Container[]>([]);
 	let loading = $state(true);
@@ -105,11 +111,42 @@
 			label: 'Image status',
 			sortable: true,
 			key: 'UpToDate',
-			filterOptions: ['Checking', 'Up to date', 'Update available', 'Unknown']
+			filterOptions: ['Pending', 'Up to date', 'Update available', 'Unknown', 'Pinned']
 		},
 		{ label: 'Image', sortable: true },
 		{ label: 'State', sortable: true },
 		{ label: '' }
+	];
+
+	const popupActions: ActionData[] = [
+		{
+			hoverBackground: 'var(--green-a20)',
+			hoverColor: 'var(--dark-a0)',
+			onClick: (id, name) => ContainerAction(EnvStore.name, 'start', name),
+			text: 'Start',
+			icon: Play
+		},
+		{
+			hoverBackground: 'var(--yellow-a20)',
+			hoverColor: 'var(--dark-a0)',
+			onClick: (id, name) => ContainerAction(EnvStore.name, 'restart', name),
+			text: 'Restart',
+			icon: ArrowsClockwise
+		},
+		{
+			hoverBackground: 'var(--red-a20)',
+			hoverColor: 'var(--dark-a0)',
+			onClick: (id, name) => ContainerAction(EnvStore.name, 'stop', name),
+			text: 'Stop',
+			icon: Stop
+		},
+		{
+			hoverBackground: 'var(--red-a20)',
+			hoverColor: 'var(--dark-a0)',
+			onClick: (id, name) => ContainerAction(EnvStore.name, 'remove', name),
+			text: 'Delete',
+			icon: Trash
+		}
 	];
 </script>
 
@@ -142,7 +179,7 @@
 			<ContainerState state={r.State} />
 		</td>
 		<td class="set-width">
-			<ContainerActionButtons id={r.ID} name={r.Name} />
+			<PopupActionButton id={r.ID} name={r.Name} actions={popupActions} />
 		</td>
 	{/snippet}
 </Table>

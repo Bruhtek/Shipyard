@@ -16,17 +16,17 @@
 
 	const StateToIcon: Record<ContainerUpToDate, Component> = {
 		[ContainerUpToDate.UpToDate]: CheckCircle,
-		[ContainerUpToDate.Error]: Question,
-		[ContainerUpToDate.Unknown]: Spinner,
+		[ContainerUpToDate.Unknown]: Question,
+		[ContainerUpToDate.Pending]: Spinner,
 		[ContainerUpToDate.UpdateAvailable]: Cloud,
-		[ContainerUpToDate.Pinned]: PushPin,
+		[ContainerUpToDate.Pinned]: PushPin
 	};
 	const StateToText: Record<ContainerUpToDate, string> = {
 		[ContainerUpToDate.UpToDate]: 'Up to date',
-		[ContainerUpToDate.Error]: 'Unknown',
-		[ContainerUpToDate.Unknown]: 'Checking...',
+		[ContainerUpToDate.Unknown]: 'Unknown',
+		[ContainerUpToDate.Pending]: 'Checking...',
 		[ContainerUpToDate.UpdateAvailable]: 'Update available',
-		[ContainerUpToDate.Pinned]: 'Pinned',
+		[ContainerUpToDate.Pinned]: 'Pinned'
 	};
 
 	const Icon = $derived(StateToIcon[state]);
@@ -41,7 +41,7 @@
 	</Badge>
 {/snippet}
 
-{#if state === ContainerUpToDate.Unknown || state === ContainerUpToDate.Error}
+{#if state === ContainerUpToDate.Pending || state === ContainerUpToDate.Unknown}
 	{@render UpToDateStatus('var(--surface-tonal-a20)', undefined)}
 {:else if state === ContainerUpToDate.UpdateAvailable}
 	{@render UpToDateStatus('var(--yellow-a20)', 'var(--dark-a0)')}

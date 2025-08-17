@@ -54,6 +54,10 @@ type TempContainer struct {
 }
 
 func AreContainersUpToDate(containers []*Container) UpToDateStatus {
+	if len(containers) == 0 {
+		return Unknown
+	}
+
 	var hasUpdateAvailable = false
 	var hasUnknown = false
 	var allPinned = true

@@ -7,7 +7,16 @@
 	import { DATA_FETCHING_INTERVAL } from '$lib/consts';
 	import { sortDataByKey } from '$lib/utils/displayUtils';
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
-	import { type Stack, type StackWithID, TStackResponse } from '$lib/types/docker/Stack';
+	import { type StackWithID, TStackResponse } from '$lib/types/docker/Stack';
+	import ContainerUpToDateStatus from '$lib/components/table/container/ContainerUpToDateStatus.svelte';
+	import PopupActionButton from '$lib/components/table/actionButtons/PopupActionButton.svelte';
+	import type { ActionData } from '$lib/components/table/actionButtons/ActionData';
+	import ArrowFatUp from '~icons/ph/arrow-fat-up';
+	import Stop from '~icons/ph/stop';
+	import ArrowFatDown from '~icons/ph/arrow-fat-down';
+	import ArrowsClockwise from '~icons/ph/arrows-clockwise';
+	import CloudArrowDown from '~icons/ph/cloud-arrow-down';
+	import StackAction from '$lib/websocket/actions/Stack';
 
 	let stackData = $state<StackWithID[]>([]);
 	let loading = $state(true);
@@ -89,8 +98,57 @@
 
 	const tableColumns: TableColumn[] = [
 		{ label: 'Name', sortable: true },
+		{ label: 'Update status', sortable: true, key: 'UpToDate' },
 		{ label: 'Status', sortable: true },
 		{ label: '' }
+	];
+
+	const popupActions: ActionData[] = [
+		{
+			text: 'Up',
+			icon: ArrowFatUp,
+			onClick: (id: string, name: string) => {
+				StackAction(EnvStore.name, 'up', name);
+			},
+			hoverBackground: 'var(--green-a20)',
+			hoverColor: 'var(--dark-a0)'
+		},
+		{
+			text: 'Stop',
+			icon: Stop,
+			onClick: (id: string, name: string) => {
+				StackAction(EnvStore.name, 'stop', name);
+			},
+			hoverBackground: 'var(--red-a20)',
+			hoverColor: 'var(--dark-a0)'
+		},
+		{
+			text: 'Down',
+			icon: ArrowFatDown,
+			onClick: (id: string, name: string) => {
+				StackAction(EnvStore.name, 'down', name);
+			},
+			hoverBackground: 'var(--red-a20)',
+			hoverColor: 'var(--dark-a0)'
+		},
+		{
+			text: 'Restart',
+			icon: ArrowsClockwise,
+			onClick: (id: string, name: string) => {
+				StackAction(EnvStore.name, 'restart', name);
+			},
+			hoverBackground: 'var(--yellow-a20)',
+			hoverColor: 'var(--dark-a0)'
+		},
+		{
+			text: 'Pull',
+			icon: CloudArrowDown,
+			onClick: (id: string, name: string) => {
+				StackAction(EnvStore.name, 'pull', name);
+			},
+			hoverBackground: 'var(--primary-a20)',
+			hoverColor: 'var(--dark-a0)'
+		}
 	];
 </script>
 
@@ -110,8 +168,13 @@
 >
 	{#snippet Row(r: StackWithID)}
 		<td>{r.Name}</td>
+		<td>
+			<ContainerUpToDateStatus state={r.UpToDate} />
+		</td>
 		<td>{r.Status}</td>
-		<td class="set-width"> A </td>
+		<td class="set-width">
+			<PopupActionButton id={r.ID} name={r.ConfigFiles} actions={popupActions} />
+		</td>
 	{/snippet}
 </Table>
 

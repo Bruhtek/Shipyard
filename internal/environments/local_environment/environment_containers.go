@@ -109,6 +109,12 @@ func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Containe
 
 	image := e.GetImage(imageId)
 	if image == nil {
+		if strings.HasPrefix(container.Image, "sha256:") {
+			// it is very possible, that the image doesn't exist,
+			// or has been modified in some way during the container lifecycle
+			container.UpToDate = docker.Unknown
+		}
+
 		log.Warn().
 			Str("container-id", container.ID).
 			Str("container-name", container.Name).
@@ -155,7 +161,8 @@ func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Containe
 			Str("container-id", container.ID).
 			Str("container-name", container.Name).
 			Str("image", container.Image).
-			Msg("Error while checking container update status: Error getting manifest")
+			Msg("Error while checking container update status: Error getting manifest. " +
+				"It's possible this is a local image, or it's behind authentication.")
 		container.UpToDate = docker.Unknown
 		return
 	}

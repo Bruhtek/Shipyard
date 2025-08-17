@@ -30,6 +30,23 @@ func GetDockerCommand(object string, action string, objectId string) []string {
 		if !strings.Contains(permittedActionsJoined, action) {
 			return empty
 		}
+	case "stack":
+		permittedActions := []string{"up", "stop", "down", "restart", "pull"}
+		permittedActionsJoined := strings.Join(permittedActions, ",")
+		if !strings.Contains(permittedActionsJoined, action) {
+			return empty
+		}
+
+		base = append(base, "compose")
+		// in this case, the objectId is actually the config file path
+		base = append(base, "-f", objectId)
+		base = append(base, action)
+
+		if action == "up" {
+			// for "up" action, we add --detach and --remove-orphans flags
+			base = append(base, "-d", "--remove-orphans")
+		}
+		return base
 	case "TEST":
 		//return append(base, "container", "remove", "221f468ab0c3", "700a4d7b2b60")
 		return empty
