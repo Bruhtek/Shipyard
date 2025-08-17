@@ -59,19 +59,21 @@
 	</thead>
 	<tbody class="tbody">
 		{#each data as rowData (rowData.ID)}
-			<tr class="t-row">
-				<td>
-					<input
-						type="checkbox"
-						checked={selected.includes(rowData.ID)}
-						onchange={() => {
-							if (selected.includes(rowData.ID)) {
-								selected = selected.filter((id) => id !== rowData.ID);
-							} else {
-								selected = [...selected, rowData.ID];
-							}
-						}}
-					/>
+			<tr class="t-row" class:selected={selected.includes(rowData.ID)}>
+				<td class="select-box">
+					<label class="row-checkbox">
+						<input
+							type="checkbox"
+							checked={selected.includes(rowData.ID)}
+							onchange={() => {
+								if (selected.includes(rowData.ID)) {
+									selected = selected.filter((id) => id !== rowData.ID);
+								} else {
+									selected = [...selected, rowData.ID];
+								}
+							}}
+						/>
+					</label>
 				</td>
 				{@render Row(rowData)}
 			</tr>
@@ -135,6 +137,10 @@
 		text-align: left;
 	}
 
+	.select-box {
+		width: 2.5rem;
+	}
+
 	.t-row :global(td) {
 		border: 0.1rem solid var(--surface-tonal-a10);
 		padding: 0.2rem 0.5rem;
@@ -145,8 +151,23 @@
 	.t-row:last-child :global(td:last-child) {
 		border-bottom-right-radius: var(--border-radius);
 	}
+	.t-row:last-child {
+		border-bottom-left-radius: var(--border-radius);
+		border-bottom-right-radius: var(--border-radius);
+	}
+	.t-row.selected :global(td) {
+		background-color: var(--surface-tonal-a20);
+	}
 
 	.table :global(tr:hover) {
 		background-color: var(--surface-tonal-a10);
+	}
+
+	.row-checkbox {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin: -10px;
+		padding: 10px;
 	}
 </style>

@@ -3,6 +3,9 @@ package local_environment
 import (
 	"Shipyard/internal/docker"
 	"Shipyard/internal/terminals"
+	"maps"
+	"slices"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -51,7 +54,9 @@ func (e *LocalEnvironment) GetNetwork(idOrName string) *docker.Network {
 				return net
 			}
 		}
-		return nil
+
+		id := selectIdPrefixFromList(slices.Collect(maps.Keys(e.networks)), idOrName)
+		return e.networks[id]
 	}
 	return network
 }

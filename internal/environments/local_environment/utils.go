@@ -1,6 +1,9 @@
 package local_environment
 
-import "slices"
+import (
+	"slices"
+	"strings"
+)
 
 func (e *LocalEnvironment) getUsedImageIds(ids []string) []string {
 	usedIds := make([]string, 0)
@@ -18,4 +21,23 @@ func (e *LocalEnvironment) getUsedImageIds(ids []string) []string {
 	}
 
 	return usedIds
+}
+
+func selectIdPrefixFromList(ids []string, prefix string) string {
+	matches := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if strings.HasPrefix(id, prefix) {
+			matches = append(matches, id)
+		}
+
+		if len(matches) > 1 {
+			return ""
+		}
+	}
+
+	if len(matches) == 1 {
+		return matches[0]
+	}
+
+	return ""
 }

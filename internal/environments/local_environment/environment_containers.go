@@ -5,11 +5,14 @@ import (
 	"Shipyard/internal/terminals"
 	"context"
 	"fmt"
+	"maps"
+	"slices"
+	"strings"
+	"time"
+
 	"github.com/regclient/regclient"
 	"github.com/regclient/regclient/types/ref"
 	"github.com/rs/zerolog/log"
-	"strings"
-	"time"
 )
 
 const UPDATE_CHECK_COOLDOWN = time.Hour * 2
@@ -267,7 +270,14 @@ func (e *LocalEnvironment) GetContainer(id string) *docker.Container {
 	e.containerMutex.RLock()
 	defer e.containerMutex.RUnlock()
 
-	return e.containers[id]
+	cont, ok := e.containers[id]
+	if !ok {
+		id = selectIdPrefixFromList(slices.Collect(maps.Keys(e.containers)), id)
+
+		return e.containers[id]
+	}
+
+	return cont
 }
 
 func (e *LocalEnvironment) GetContainerCount() int {

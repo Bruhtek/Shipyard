@@ -4,8 +4,11 @@ import (
 	"Shipyard/internal/docker"
 	"Shipyard/internal/terminals"
 	"fmt"
-	"github.com/rs/zerolog/log"
+	"maps"
+	"slices"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 func (e *LocalEnvironment) GetImageCount() int {
@@ -94,7 +97,12 @@ func (e *LocalEnvironment) GetImage(id string) *docker.Image {
 
 	image, ok := e.images[id]
 	if !ok {
-		return nil
+		if !strings.HasPrefix(id, "sha256:") {
+			id = "sha256:" + id
+		}
+		id = selectIdPrefixFromList(slices.Collect(maps.Keys(e.images)), id)
+
+		return e.images[id]
 	}
 
 	return image
