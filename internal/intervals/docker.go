@@ -5,8 +5,9 @@ import (
 	"Shipyard/internal/environments"
 	"Shipyard/internal/environments/types"
 	"Shipyard/internal/remote_worker"
-	"github.com/rs/zerolog/log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func SetupScanning(isRemote bool) {
@@ -59,8 +60,9 @@ func scanEnvs() {
 		log.Debug().
 			Str("env", env.GetName()).
 			Msg("Scanning environment data")
-		env.ScanContainers()
 		env.ScanImages()
+		env.ScanContainers()
 		env.ScanNetworks()
+		env.ScanStacks()
 	}
 }
