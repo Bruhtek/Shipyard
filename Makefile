@@ -1,4 +1,4 @@
-.PHONY: build-web
+.PHONY: build-web build-only-aio
 
 ifeq ($(OS), Windows_NT)
 SRC_FILES := $(shell powershell -Command "(Get-ChildItem -Path database,internal -Recurse).FullName")
@@ -17,6 +17,10 @@ build-web:
 	@echo Compiling the client web interface
 	@echo Make sure PNPM is installed
 	make -C web
+
+build-only-aio:
+	@echo Building AIO Shipyard without web interface - MAKE SURE IT IS ALREADY BUILT
+	go build -o build/aio Shipyard/cmd/aio
 
 build/remote: $(SRC_FILES)
 	@echo Building Shipyard remote

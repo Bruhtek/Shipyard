@@ -1,0 +1,9 @@
+web/node_modules
+web/.svelte-kit
+web/build
+
+.git
+build
+tmp
+.env*
+shipyard.db

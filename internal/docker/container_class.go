@@ -52,3 +52,40 @@ type TempContainer struct {
 	CreatedAt string
 	Command   string
 }
+
+func AreContainersUpToDate(containers []*Container) UpToDateStatus {
+	var hasUpdateAvailable = false
+	var hasUnknown = false
+	var allPinned = true
+	var allUpToDate = true
+
+	for _, container := range containers {
+		if container.UpToDate == UpdateAvailable {
+			hasUpdateAvailable = true
+		}
+		if container.UpToDate == Unknown {
+			hasUnknown = true
+		}
+		if container.UpToDate != Pinned {
+			allPinned = false
+		}
+		if container.UpToDate != UpToDate {
+			allUpToDate = false
+		}
+	}
+
+	if hasUnknown {
+		return Unknown
+	}
+	if hasUpdateAvailable {
+		return UpdateAvailable
+	}
+	if allPinned {
+		return Pinned
+	}
+	if allUpToDate {
+		return UpToDate
+	}
+
+	return Pending
+}

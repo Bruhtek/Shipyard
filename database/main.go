@@ -2,12 +2,16 @@ package database
 
 import (
 	"database/sql"
+	"embed"
+
 	_ "github.com/glebarez/go-sqlite"
 	"github.com/rs/zerolog/log"
-	"os"
 )
 
 var DB *sql.DB
+
+//go:embed all:migrations/*.sql
+var migrations embed.FS
 
 func InitializeDatabase() *sql.DB {
 	log.Info().
@@ -20,7 +24,7 @@ func InitializeDatabase() *sql.DB {
 	}
 
 	// run migrations - each file from database/migrations, one by one
-	files, err := os.ReadDir("database/migrations")
+	files, err := migrations.ReadDir("migrations")
 	if err != nil {
 		panic(err)
 	}
@@ -28,8 +32,8 @@ func InitializeDatabase() *sql.DB {
 		if file.IsDir() {
 			continue
 		}
-		filePath := "database/migrations/" + file.Name()
-		migration, err := os.ReadFile(filePath)
+		filePath := "migrations/" + file.Name()
+		migration, err := migrations.ReadFile(filePath)
 		if err != nil {
 			panic(err)
 		}
