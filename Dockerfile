@@ -1,3 +1,5 @@
+LABEL org.opencontainers.image.source="https://github.com/Bruhtek/Shipyard"
+
 FROM golang:1.23-alpine AS build
 
 WORKDIR /app
