@@ -1,0 +1,59 @@
+package remote_environment
+
+import (
+	"Shipyard/internal/environments/types"
+	"github.com/gorilla/websocket"
+	"sync"
+	"time"
+)
+
+const (
+	MAX_HEARTBEAT_INTERVAL = time.Second * 7
+	NEED_TIMEOUT           = time.Second * 30
+)
+
+type RemoteEnvironment struct {
+	Name string
+	Key  string
+
+	LastHeartbeat  time.Time
+	heartbeatMutex sync.RWMutex
+	Connection     *websocket.Conn
+	connMutex      sync.Mutex
+
+	// time when the environment was last requested by a user
+	LastNeeded      time.Time
+	lastNeededMutex sync.RWMutex
+
+	MessageChannels      map[string]chan []byte
+	messageChannelsMutex sync.RWMutex
+}
+
+func (r *RemoteEnvironment) GetName() string {
+	return r.Name
+}
+
+func (r *RemoteEnvironment) SetName(name string) {
+	r.Name = name
+}
+
+func (r *RemoteEnvironment) GetEnvType() types.EnvType {
+	return "remote"
+}
+
+func (r *RemoteEnvironment) GetEnvDescription() types.EnvDescription {
+	return types.EnvDescription{
+		EnvType:   "remote",
+		Name:      r.Name,
+		Connected: r.IsConnected(),
+	}
+}
+
+func NewRemoteEnv(key string) *RemoteEnvironment {
+	env := &RemoteEnvironment{
+		Key:             key,
+		MessageChannels: map[string]chan []byte{},
+	}
+
+	return env
+}

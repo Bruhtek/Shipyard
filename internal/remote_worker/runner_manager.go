@@ -1,30 +1,29 @@
 package remote_worker
 
 import (
-	"Shipyard/internal/terminals"
-	"Shipyard/internal/utils"
+	"Shipyard/internal/actions"
 	"context"
 	"sync"
 )
 
 type RunnerMngr struct {
-	runners map[string]*terminals.Runner
+	runners map[string]*actions.Runner
 
 	runnersMutex sync.RWMutex
 }
 
 var RunnerManager RunnerMngr = RunnerMngr{
-	runners:      make(map[string]*terminals.Runner),
+	runners:      make(map[string]*actions.Runner),
 	runnersMutex: sync.RWMutex{},
 }
 
-func (r *RunnerMngr) NewRunner(id string, cmd []string) *terminals.Runner {
+func (r *RunnerMngr) NewRunner(id string, cmd []string) *actions.Runner {
 	r.runnersMutex.Lock()
 	defer r.runnersMutex.Unlock()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	runner := terminals.Runner{
+	runner := actions.Runner{
 		Command:    cmd,
 		Ctx:        ctx,
 		CancelFunc: cancel,
@@ -36,7 +35,7 @@ func (r *RunnerMngr) NewRunner(id string, cmd []string) *terminals.Runner {
 			}
 			CManager.SendResponse(id, message)
 		},
-		OutputMetaFn: func(status utils.ActionStatus) {
+		OutputMetaFn: func(status actions.ActionStatus) {
 			message := map[string]interface{}{
 				"ActionStatus": status,
 				"Type":         "OutputMetaFn",
@@ -81,7 +80,7 @@ func (r *RunnerMngr) CancelRunner(id string) {
 	defer r.runnersMutex.Unlock()
 
 	if runner, ok := r.runners[id]; ok {
-		runner.OutputMetaFn(utils.Failed)
+		runner.OutputMetaFn(actions.Failed)
 		runner.CancelFunc()
 	}
 }

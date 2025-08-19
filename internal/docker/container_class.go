@@ -2,7 +2,6 @@ package docker
 
 import (
 	"encoding/json"
-	"strings"
 	"time"
 )
 
@@ -30,10 +29,11 @@ type Container struct {
 type UpToDateStatus int
 
 const (
-	Unknown         UpToDateStatus = 0
+	Pending         UpToDateStatus = 0
 	UpToDate        UpToDateStatus = 1
 	UpdateAvailable UpToDateStatus = 2
-	Error           UpToDateStatus = 3
+	Unknown         UpToDateStatus = 3
+	Pinned          UpToDateStatus = 4
 )
 
 func (c *Container) toJSON() ([]byte, error) {
@@ -53,41 +53,43 @@ type TempContainer struct {
 	Command   string
 }
 
-func (c *TempContainer) ToContainer() (container Container, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = r.(error)
+func AreContainersUpToDate(containers []*Container) UpToDateStatus {
+	if len(containers) == 0 {
+		return Unknown
+	}
+
+	var hasUpdateAvailable = false
+	var hasUnknown = false
+	var allPinned = true
+	var allUpToDate = true
+
+	for _, container := range containers {
+		if container.UpToDate == UpdateAvailable {
+			hasUpdateAvailable = true
 		}
-	}()
-
-	t, err := time.Parse("2006-01-02 15:04:05 -0700 MST", c.CreatedAt)
-	if err != nil {
-		return Container{}, err
-	}
-
-	container = Container{
-		ID:        c.ID,
-		Image:     c.Image,
-		Labels:    make(map[string]string),
-		Name:      strings.Split(c.Names, ",")[0],
-		Names:     strings.Split(c.Names, ","),
-		Ports:     strings.Split(c.Ports, ","),
-		Networks:  strings.Split(c.Networks, ","),
-		State:     c.State,
-		Status:    c.Status,
-		CreatedAt: t,
-		Command:   c.Command,
-	}
-
-	// split labels by a comma, then split by an equal sign
-	labels := strings.Split(c.Labels, ",")
-	for _, label := range labels {
-		labelSplit := strings.Split(label, "=")
-		if len(labelSplit) != 2 {
-			continue
+		if container.UpToDate == Unknown {
+			hasUnknown = true
 		}
-		container.Labels[labelSplit[0]] = labelSplit[1]
+		if container.UpToDate != Pinned {
+			allPinned = false
+		}
+		if container.UpToDate != UpToDate {
+			allUpToDate = false
+		}
 	}
 
-	return container, nil
+	if hasUnknown {
+		return Unknown
+	}
+	if hasUpdateAvailable {
+		return UpdateAvailable
+	}
+	if allPinned {
+		return Pinned
+	}
+	if allUpToDate {
+		return UpToDate
+	}
+
+	return Pending
 }

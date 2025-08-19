@@ -1,11 +1,13 @@
 package intervals
 
 import (
-	"Shipyard/internal/api/websocket"
-	"Shipyard/internal/env_manager"
+	"Shipyard/internal/actions"
+	"Shipyard/internal/environments"
+	"Shipyard/internal/environments/types"
 	"Shipyard/internal/remote_worker"
-	"github.com/rs/zerolog/log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func SetupScanning(isRemote bool) {
@@ -25,7 +27,7 @@ func SetupScanning(isRemote bool) {
 			case <-ticker.C:
 				connectionCount := 0
 				if !isRemote {
-					connectionCount = websocket.ConnectionManager.ConnectionCount()
+					connectionCount = actions.ConnectionManager.ConnectionCount()
 				} else {
 					if remote_worker.CManager.IsConnected() {
 						connectionCount = 1
@@ -48,9 +50,9 @@ func SetupScanning(isRemote bool) {
 }
 
 func scanEnvs() {
-	envs := env_manager.EnvManager.GetEnvs()
+	envs := environments.EnvManager.GetEnvs()
 	for _, envI := range envs {
-		env, ok := envI.(env_manager.LocalEnvironment)
+		env, ok := envI.(types.LocalEnvironment)
 		if !ok {
 			continue
 		}
@@ -58,8 +60,9 @@ func scanEnvs() {
 		log.Debug().
 			Str("env", env.GetName()).
 			Msg("Scanning environment data")
-		env.ScanContainers()
 		env.ScanImages()
+		env.ScanContainers()
 		env.ScanNetworks()
+		env.ScanStacks()
 	}
 }

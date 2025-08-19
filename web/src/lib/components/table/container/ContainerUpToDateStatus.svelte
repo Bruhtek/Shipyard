@@ -4,6 +4,7 @@
 	import Question from '~icons/ph/question';
 	import Spinner from '~icons/ph/spinner';
 	import Cloud from '~icons/ph/cloud';
+	import PushPin from '~icons/ph/push-pin';
 	import type { Component } from 'svelte';
 	import Badge from '$lib/components/fragments/Badge.svelte';
 
@@ -15,15 +16,17 @@
 
 	const StateToIcon: Record<ContainerUpToDate, Component> = {
 		[ContainerUpToDate.UpToDate]: CheckCircle,
-		[ContainerUpToDate.Error]: Question,
-		[ContainerUpToDate.Unknown]: Spinner,
-		[ContainerUpToDate.UpdateAvailable]: Cloud
+		[ContainerUpToDate.Unknown]: Question,
+		[ContainerUpToDate.Pending]: Spinner,
+		[ContainerUpToDate.UpdateAvailable]: Cloud,
+		[ContainerUpToDate.Pinned]: PushPin
 	};
 	const StateToText: Record<ContainerUpToDate, string> = {
 		[ContainerUpToDate.UpToDate]: 'Up to date',
-		[ContainerUpToDate.Error]: 'Unknown',
-		[ContainerUpToDate.Unknown]: 'Checking...',
-		[ContainerUpToDate.UpdateAvailable]: 'Update available'
+		[ContainerUpToDate.Unknown]: 'Unknown',
+		[ContainerUpToDate.Pending]: 'Checking...',
+		[ContainerUpToDate.UpdateAvailable]: 'Update available',
+		[ContainerUpToDate.Pinned]: 'Pinned'
 	};
 
 	const Icon = $derived(StateToIcon[state]);
@@ -38,12 +41,16 @@
 	</Badge>
 {/snippet}
 
-{#if state === ContainerUpToDate.Unknown || state === ContainerUpToDate.Error}
+{#if state === ContainerUpToDate.Pending || state === ContainerUpToDate.Unknown}
 	{@render UpToDateStatus('var(--surface-tonal-a20)', undefined)}
 {:else if state === ContainerUpToDate.UpdateAvailable}
 	{@render UpToDateStatus('var(--yellow-a20)', 'var(--dark-a0)')}
 {:else if state === ContainerUpToDate.UpToDate}
 	{@render UpToDateStatus('var(--green-a20)', 'var(--dark-a0)')}
+{:else if state === ContainerUpToDate.Pinned}
+	{@render UpToDateStatus('var(--primary-a20)', 'var(--dark-a0)')}
+{:else}
+	{@render UpToDateStatus('var(--surface-tonal-a20)', undefined)}
 {/if}
 
 <style>
