@@ -3,6 +3,8 @@ package local_environment
 import (
 	"Shipyard/internal/docker"
 	"Shipyard/internal/terminals"
+	"os"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -22,6 +24,8 @@ func (e *LocalEnvironment) ScanStacks() {
 		return
 	}
 
+	stacksInFolder := e.ScanStackFolder(false)
+
 	e.stacks = make(map[string]*docker.Stack)
 	for _, compose := range composes {
 		compose.Containers = e.GetContainersInStack(compose.ConfigFiles)
@@ -30,6 +34,99 @@ func (e *LocalEnvironment) ScanStacks() {
 
 		e.stacks[compose.ConfigFiles] = compose
 	}
+
+	// add any stacks that are in the stacks folder but not in the docker compose ls output
+	// these are the "inactive" stacks - they are not running but have a config file
+	for _, stackDir := range stacksInFolder {
+		_, ok := e.stacks[stackDir.ConfigFiles]
+		if ok {
+			continue
+		} else {
+			e.stacks[stackDir.ConfigFiles] = stackDir
+		}
+	}
+
+}
+
+var noStacksDirWarn = false
+var stacksDirLastScan = time.Time{}
+var stacksDirScanInterval = 10 * time.Minute
+
+var lastScannedStacks = make([]*docker.Stack, 0)
+
+func (e *LocalEnvironment) ScanStackFolder(forced bool) []*docker.Stack {
+	var empty = make([]*docker.Stack, 0)
+	if !forced && time.Since(stacksDirLastScan) < stacksDirScanInterval {
+		return lastScannedStacks
+	}
+
+	folder := os.Getenv("STACKS_DIR")
+	if folder == "" {
+		if !noStacksDirWarn {
+			log.Warn().Msg("STACKS_DIR environment variable is not set - Shipyard will only show active stacks")
+			noStacksDirWarn = true
+		}
+		return empty
+	}
+
+	if _, err := os.Stat(folder); os.IsNotExist(err) {
+		if !noStacksDirWarn {
+			log.Warn().Msgf("STACKS_DIR '%s' does not exist - Shipyard will only show active stacks", folder)
+			noStacksDirWarn = true
+		}
+		return empty
+	}
+
+	files, err := os.ReadDir(folder)
+	if err != nil {
+		log.Err(err).Msgf("Error reading stacks directory '%s'", folder)
+		return empty
+	}
+
+	stacks := make([]*docker.Stack, 0)
+	for _, file := range files {
+		if !file.IsDir() {
+			continue
+		}
+		filesInside, err := os.ReadDir(folder + "/" + file.Name())
+		if err != nil {
+			log.Err(err).Msgf("Error reading directory '%s/%s'", folder, file.Name())
+			continue
+		}
+		configFile := ""
+		for _, f := range filesInside {
+			allowedNames := []string{"docker-compose.yml", "docker-compose.yaml", "compose.yaml", "compose.yml"}
+			if f.IsDir() {
+				continue
+			}
+			for _, name := range allowedNames {
+				if f.Name() == name {
+					configFile = folder + "/" + file.Name() + "/" + f.Name()
+					break
+				}
+			}
+		}
+		if configFile == "" {
+			log.Debug().Msgf("No valid compose file found in stack directory '%s/%s'", folder, file.Name())
+			continue
+		}
+		stack := &docker.Stack{
+			Name:        file.Name(),
+			ConfigFiles: configFile,
+			Status:      "inactive",
+			Containers:  make([]*docker.Container, 0),
+			Networks:    make([]*docker.Network, 0),
+			UpToDate:    docker.Unknown,
+		}
+		stacks = append(stacks, stack)
+	}
+	if len(stacks) == 0 {
+		log.Debug().Msgf("No stacks found in directory '%s'", folder)
+		return empty
+	}
+	lastScannedStacks = stacks
+	stacksDirLastScan = time.Now()
+	return stacks
 }
 
 func (e *LocalEnvironment) GetContainersInStack(configFile string) []*docker.Container {
