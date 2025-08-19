@@ -1,5 +1,3 @@
-LABEL org.opencontainers.image.source="https://github.com/Bruhtek/Shipyard"
-
 FROM golang:1.23-alpine AS build
 
 WORKDIR /app
@@ -24,6 +22,8 @@ FROM alpine:latest
 
 WORKDIR /app
 RUN apk add --no-cache docker docker-cli docker-cli-compose
+
+LABEL org.opencontainers.image.source="https://github.com/Bruhtek/Shipyard"
 
 COPY --from=build /app/build/aio /app/aio
 
