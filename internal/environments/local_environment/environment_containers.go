@@ -20,9 +20,6 @@ const ERROR_UPDATE_CHECK_COOLDOWN = UPDATE_CHECK_COOLDOWN / 2
 const MAX_CHECKS_PER_SCAN = 5
 
 func (e *LocalEnvironment) ScanContainers() {
-	e.containerMutex.Lock()
-	defer e.containerMutex.Unlock()
-
 	out, err := terminals.RunSimpleCommand(ContainerLsCommand)
 	if err != nil {
 		log.Err(err).Msg("Error listing containers")
@@ -33,9 +30,9 @@ func (e *LocalEnvironment) ScanContainers() {
 
 	containers := ParsePsJson([]byte(out))
 	for id, container := range containers {
-		currentContainer, ok := e.containers[container.ID]
+		currentContainer := e.GetContainer(container.ID)
 		//#region Check Container ImageID
-		if ok {
+		if currentContainer != nil && currentContainer.ImageID != "" {
 			// image ID is immutable, so we can skip the relatively expensive inspect command if we already have it
 			containers[id].ImageID = currentContainer.ImageID
 		} else {
@@ -56,7 +53,7 @@ func (e *LocalEnvironment) ScanContainers() {
 			continue
 		}
 
-		if ok {
+		if currentContainer != nil {
 			shouldUpdate := true
 			if currentContainer.UpToDate == docker.UpdateAvailable {
 				shouldUpdate = false
@@ -83,6 +80,8 @@ func (e *LocalEnvironment) ScanContainers() {
 		}
 	}
 
+	e.containerMutex.Lock()
+	defer e.containerMutex.Unlock()
 	e.containers = make(map[string]*docker.Container)
 	for _, container := range containers {
 		e.containers[container.ID] = container
@@ -130,11 +129,11 @@ func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Containe
 	}
 
 	if len(image.RepoDigests) == 0 {
-		// debug, not warn, since this can happen with some images - local only, for example
-		log.Debug().
+		// warn, since this can happen with some images - local only, for example
+		log.Warn().
 			Str("container-id", container.ID).
 			Str("container-name", container.Name).
-			Msg("Container image has no repo digests, cannot check for updates")
+			Msg("Container image has no repo digests, cannot check for updates - is this a local image?")
 		container.UpToDate = docker.Unknown
 		return
 	}
@@ -198,14 +197,6 @@ func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Containe
 
 	digests = append(digests, manifest.GetDescriptor().Digest.String())
 
-	log.Debug().
-		Str("container-id", container.ID).
-		Str("container-name", container.Name).
-		Strs("digests", digests).
-		Str("image", container.Image).
-		Strs("repo-digests", image.RepoDigests).
-		Msg("Checking container update status")
-
 	isInDigests := false
 	for _, digest := range image.RepoDigests {
 		for _, mDigest := range digests {
@@ -219,51 +210,10 @@ func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Containe
 		}
 	}
 	if isInDigests {
-		log.Debug().
-			Str("container-id", container.ID).
-			Str("container-name", container.Name).
-			Str("image", container.Image).
-			Msg("Container is up to date")
 		container.UpToDate = docker.UpToDate
 	} else {
-		log.Debug().
-			Str("container-id", container.ID).
-			Str("container-name", container.Name).
-			Str("image", container.Image).
-			Msg("Container has update available")
 		container.UpToDate = docker.UpdateAvailable
 	}
-
-	//imageRef, err := ref.New(container.Image)
-	//if err != nil {
-	//	log.Err(err).Msg("Error while checking container update status: Error parsing image ref")
-	//	container.UpToDate = docker.Error
-	//	return
-	//}
-	//
-	//ctx := context.Background()
-	//manifest, err := rc.ManifestHead(ctx, imageRef)
-	//if err != nil {
-	//	log.Err(err).Msg("Error while checking container update status: Error getting manifest")
-	//	container.UpToDate = docker.Error
-	//	return
-	//}
-	//
-	//defer rc.Close(ctx, imageRef)
-	//
-	//manifestDigest := manifest.GetDescriptor().Digest.String()
-	//
-	//log.Debug().
-	//	Str("manifest-digest", manifestDigest).
-	//	Str("image-id", container.ImageID).
-	//	Msg("Checking container update status")
-	//
-	//if manifestDigest == container.ImageID {
-	//	container.UpToDate = docker.UpToDate
-	//} else {
-	//	container.UpToDate = docker.UpdateAvailable
-	//}
-
 }
 
 func (e *LocalEnvironment) GetContainers() map[string]*docker.Container {

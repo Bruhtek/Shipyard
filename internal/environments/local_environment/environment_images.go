@@ -19,9 +19,6 @@ func (e *LocalEnvironment) GetImageCount() int {
 }
 
 func (e *LocalEnvironment) ScanImages() {
-	e.imageMutex.Lock()
-	defer e.imageMutex.Unlock()
-
 	out, err := terminals.RunSimpleCommand("docker image ls --format json --no-trunc")
 	if err != nil {
 		log.Err(err).Msg("Error listing images")
@@ -36,8 +33,8 @@ func (e *LocalEnvironment) ScanImages() {
 
 	images := ParseImageLsJson([]byte(out))
 	for num, image := range images {
-		currentImage, ok := e.images[image.ID]
-		if ok && currentImage.RepoDigests != nil {
+		currentImage := e.GetImage(image.ID)
+		if currentImage != nil && currentImage.RepoDigests != nil {
 			// repo digests are immutable, so we can skip the relatively expensive inspect command if we already have it
 			images[num].RepoDigests = currentImage.RepoDigests
 		} else {
@@ -59,6 +56,8 @@ func (e *LocalEnvironment) ScanImages() {
 		}
 	}
 
+	e.imageMutex.Lock()
+	defer e.imageMutex.Unlock()
 	e.images = make(map[string]*docker.Image)
 	for _, image := range images {
 		e.images[image.ID] = &image

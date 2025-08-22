@@ -10,9 +10,6 @@ import (
 )
 
 func (e *LocalEnvironment) ScanStacks() {
-	e.stackMutex.Lock()
-	defer e.stackMutex.Unlock()
-
 	out, err := terminals.RunSimpleCommand("docker compose ls -a --format json")
 	if err != nil {
 		log.Err(err).Msg("Error listing stacks")
@@ -26,6 +23,8 @@ func (e *LocalEnvironment) ScanStacks() {
 
 	stacksInFolder := e.ScanStackFolder(false)
 
+	e.stackMutex.Lock()
+	defer e.stackMutex.Unlock()
 	e.stacks = make(map[string]*docker.Stack)
 	for _, compose := range composes {
 		compose.Containers = e.GetContainersInStack(compose.ConfigFiles)

@@ -11,9 +11,9 @@ import (
 )
 
 func SetupScanning(isRemote bool) {
-	scanEnvs() // initial scan should be done immediately
-
 	go func() {
+		scanEnvs() // initial scan should be done immediately, but not block
+
 		interval := 5 * time.Second
 		ticker := time.NewTicker(interval)
 

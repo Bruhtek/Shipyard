@@ -4,9 +4,10 @@ import (
 	"Shipyard/internal/docker"
 	"encoding/json"
 	"errors"
-	"github.com/rs/zerolog/log"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func parseLabels(labelsStr string) (map[string]string, error) {
@@ -60,8 +61,11 @@ func ParsePsJson(jsonData []byte) []*docker.Container {
 		}
 		createdAt, err := time.Parse("2006-01-02 15:04:05 -0700 MST", splitLine[8])
 		if err != nil {
-			log.Err(err).Str("createdAt", splitLine[8]).Msg("Error parsing createdAt time")
-			continue
+			createdAt, err = time.Parse("2006-01-02 15:04:05 -0700 -0700", splitLine[8])
+			if err != nil {
+				log.Err(err).Str("createdAt", splitLine[8]).Msg("Error parsing createdAt time")
+				continue
+			}
 		}
 
 		labels, err := parseLabels(splitLine[2])

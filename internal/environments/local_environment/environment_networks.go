@@ -10,9 +10,6 @@ import (
 )
 
 func (e *LocalEnvironment) ScanNetworks() {
-	e.networkMutex.Lock()
-	defer e.networkMutex.Unlock()
-
 	out, err := terminals.RunSimpleCommand(NetworkLsCommand)
 	if err != nil {
 		log.Err(err).Msg("Error listing networks")
@@ -20,18 +17,22 @@ func (e *LocalEnvironment) ScanNetworks() {
 	}
 
 	networks := ParseNetworkLsJson(&out)
-	e.networks = make(map[string]*docker.Network)
-
 	containers := e.GetContainers()
 
 	for _, network := range networks {
-		curr, ok := e.networks[network.ID]
-		if ok {
+		curr := e.GetNetwork(network.ID)
+		if curr != nil {
 			curr.UpdateNetworkContainers(containers)
 			continue
 		}
 
 		network.UpdateNetworkContainers(containers)
+	}
+
+	e.networkMutex.Lock()
+	defer e.networkMutex.Unlock()
+	e.networks = make(map[string]*docker.Network)
+	for _, network := range networks {
 		e.networks[network.ID] = &network
 	}
 }

@@ -1,12 +1,13 @@
 package logger
 
 import (
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func Init(isDev bool) {
@@ -27,13 +28,25 @@ func HttpLogger(next http.Handler) http.Handler {
 		tStart := time.Now()
 
 		defer func() {
-			log.Debug().
-				Str("method", r.Method).
-				Str("url", r.URL.String()).
-				Int("status", ww.Status()).
-				Int("size", ww.BytesWritten()).
-				Dur("duration", time.Since(tStart)).
-				Msg("Request")
+			duration := time.Since(tStart)
+
+			if duration > 300*time.Millisecond {
+				log.Warn().
+					Str("method", r.Method).
+					Str("url", r.URL.String()).
+					Int("status", ww.Status()).
+					Int("size", ww.BytesWritten()).
+					Dur("duration", duration).
+					Msg("Slow request")
+			} else {
+				log.Debug().
+					Str("method", r.Method).
+					Str("url", r.URL.String()).
+					Int("status", ww.Status()).
+					Int("size", ww.BytesWritten()).
+					Dur("duration", duration).
+					Msg("Request")
+			}
 		}()
 
 		next.ServeHTTP(ww, r)
