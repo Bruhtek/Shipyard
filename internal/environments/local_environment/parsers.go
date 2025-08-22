@@ -10,6 +10,19 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+func parseCreatedAt(createdAtStr string) (time.Time, error) {
+	createdAt, err := time.Parse("2006-01-02 15:04:05 -0700 MST", createdAtStr)
+	if err != nil {
+		createdAt, err = time.Parse("2006-01-02 15:04:05 -0700 -0700", createdAtStr)
+		if err != nil {
+			log.Err(err).Str("createdAt", createdAtStr).Msg("Error parsing createdAt time")
+			return time.Time{}, err
+		}
+	}
+
+	return createdAt, nil
+}
+
 func parseLabels(labelsStr string) (map[string]string, error) {
 	labels := make(map[string]string)
 	if labelsStr != "" {
@@ -59,13 +72,9 @@ func ParsePsJson(jsonData []byte) []*docker.Container {
 			log.Error().Str("line", line).Msg("Invalid container data")
 			continue
 		}
-		createdAt, err := time.Parse("2006-01-02 15:04:05 -0700 MST", splitLine[8])
+		createdAt, err := parseCreatedAt(splitLine[8])
 		if err != nil {
-			createdAt, err = time.Parse("2006-01-02 15:04:05 -0700 -0700", splitLine[8])
-			if err != nil {
-				log.Err(err).Str("createdAt", splitLine[8]).Msg("Error parsing createdAt time")
-				continue
-			}
+			continue
 		}
 
 		labels, err := parseLabels(splitLine[2])
@@ -147,9 +156,8 @@ func ParseNetworkLsJson(jsonData *string) []docker.Network {
 			log.Error().Str("line", line).Msg("Invalid network data")
 			continue
 		}
-		createdAt, err := time.Parse("2006-01-02 15:04:05 -0700 MST", splitLine[2])
+		createdAt, err := parseCreatedAt(splitLine[2])
 		if err != nil {
-			log.Err(err).Str("createdAt", splitLine[2]).Msg("Error parsing createdAt time")
 			continue
 		}
 
