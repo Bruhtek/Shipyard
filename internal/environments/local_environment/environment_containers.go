@@ -93,7 +93,12 @@ func (e *LocalEnvironment) ScanContainers() {
 }
 
 func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Container) {
-	if time.Since(RATELIMIT_LAST_WARNING) < RATELIMIT_WARNING_COOLDOWN {
+	// only apply the rate-limit for docker hub, since other registries are less likely to have rate limits
+	// either if it starts with docker.io/ or has no registry specified (docker hub default)
+	if (strings.HasPrefix(container.Image, "docker.io/") ||
+		// here, we assume that docker registry is in the format repo/image:tag, and custom registries have a registry.domain/ prefix
+		strings.Count(container.Image, "/") < 2) &&
+		time.Since(RATELIMIT_LAST_WARNING) < RATELIMIT_WARNING_COOLDOWN {
 		// if we recently hit a rate limit, skip further checks for a while
 		container.UpToDate = docker.Pending
 		return
