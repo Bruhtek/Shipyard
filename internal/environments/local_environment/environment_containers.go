@@ -15,9 +15,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const UPDATE_CHECK_COOLDOWN = time.Hour * 2
+const UPDATE_CHECK_COOLDOWN = time.Hour * 6
 const ERROR_UPDATE_CHECK_COOLDOWN = UPDATE_CHECK_COOLDOWN / 2
 const MAX_CHECKS_PER_SCAN = 5
+
+var RATELIMIT_LAST_WARNING = time.Time{}
+
+const RATELIMIT_WARNING_COOLDOWN = time.Hour * 1
 
 func (e *LocalEnvironment) ScanContainers() {
 	out, err := terminals.RunSimpleCommand(ContainerLsCommand)
@@ -89,6 +93,12 @@ func (e *LocalEnvironment) ScanContainers() {
 }
 
 func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Container) {
+	if time.Since(RATELIMIT_LAST_WARNING) < RATELIMIT_WARNING_COOLDOWN {
+		// if we recently hit a rate limit, skip further checks for a while
+		container.UpToDate = docker.Pending
+		return
+	}
+
 	container.LastUpdateCheck = time.Now()
 	if strings.Contains(container.Image, "@sha256:") {
 		// container image is pinned to a specific digest, no need to check for updates
@@ -171,12 +181,20 @@ func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Containe
 	if manifest.IsList() {
 		fullManifest, err := rc.ManifestGet(ctx, r)
 		if err != nil {
-			log.Err(err).
-				Str("container-id", container.ID).
-				Str("container-name", container.Name).
-				Str("image", container.Image).
-				Msg("Error while checking container update status: Error getting full manifest")
-			container.UpToDate = docker.Unknown
+			if strings.Contains(err.Error(), "429") {
+				log.Warn().
+					Msg("Hit rate limit exceeded while checking container update status - stopping further checks for 1 hour")
+				RATELIMIT_LAST_WARNING = time.Now()
+				container.UpToDate = docker.Pending
+				return
+			} else {
+				log.Err(err).
+					Str("container-id", container.ID).
+					Str("container-name", container.Name).
+					Str("image", container.Image).
+					Msg("Error while checking container update status: Error getting full manifest")
+				container.UpToDate = docker.Unknown
+			}
 			return
 		}
 

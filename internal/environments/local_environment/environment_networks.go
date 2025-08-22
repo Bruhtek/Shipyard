@@ -19,10 +19,11 @@ func (e *LocalEnvironment) ScanNetworks() {
 	networks := ParseNetworkLsJson(&out)
 	containers := e.GetContainers()
 
-	for _, network := range networks {
+	for i, network := range networks {
 		curr := e.GetNetwork(network.ID)
 		if curr != nil {
 			curr.UpdateNetworkContainers(containers)
+			networks[i] = *curr
 			continue
 		}
 
