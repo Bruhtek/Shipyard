@@ -1,18 +1,16 @@
 import type { Action } from 'svelte/action';
-import { dev } from '$app/environment';
 import WSDataStore, { ConnectionStatus } from '$lib/websocket/MessageHandler.svelte.js';
 import { refreshTerminals } from '$lib/terminal/TerminalHandler.svelte';
+import { api_url } from '$lib';
 
 const websocketHandler: Action<HTMLElement> = () => {
 	$effect(() => {
-		const url = dev ? 'localhost:4000' : window.location.host;
-
 		const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 		let socket: WebSocket;
 		let shouldReconnect = true;
 
 		const initialize = () => {
-			socket = new WebSocket(`${protocol}://${url}/ws`);
+			socket = new WebSocket(`${protocol}://${api_url}/ws`);
 
 			const sendMessage = (data: object) => {
 				const message = JSON.stringify(data);

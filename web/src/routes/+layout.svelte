@@ -6,7 +6,7 @@
 	import websocketHandler from '$lib/websocket/WebsocketHandler.svelte.js';
 	import terminalHandler from '$lib/terminal/TerminalHandler.svelte.js';
 	import TerminalPopup from '$lib/components/terminal/TerminalPopup.svelte';
-		import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
+	import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
 
 	let { children } = $props();
 </script>
@@ -33,6 +33,7 @@
 	.page {
 		display: flex;
 		min-height: 100vh;
+		position: relative;
 	}
 
 	.main {
@@ -40,7 +41,7 @@
 		margin-left: 0.5rem;
 	}
 	.content {
-		margin: 0 auto;
 		padding: 1rem;
+		margin: 0 auto 8rem;
 	}
 </style>

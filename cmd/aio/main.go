@@ -9,14 +9,15 @@ import (
 	"Shipyard/internal/intervals"
 	"Shipyard/internal/logger"
 	"embed"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
-	"github.com/rs/zerolog/log"
 	"io/fs"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	"github.com/rs/zerolog/log"
 )
 
 var staticWebContent embed.FS = Shipyard.WebContent
@@ -31,8 +32,9 @@ func main() {
 	environments.InitializeEnvManager(false)
 
 	if os.Getenv("ENV") == "development" {
+		log.Warn().Msg("DEVELOPMENT MODE ENABLED: CORS is wide open")
 		r.Use(cors.Handler(cors.Options{
-			AllowedOrigins:   []string{"https://localhost:*", "http://localhost:*"},
+			AllowedOrigins:   []string{"https://*", "http://*"},
 			AllowCredentials: true,
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			MaxAge:           300, // Maximum value not ignored by any of major browsers

@@ -16,5 +16,7 @@
 		height: 100vh;
 		background-color: var(--surface-tonal-a10);
 		padding: 1rem;
+		position: sticky;
+		top: 0;
 	}
 </style>

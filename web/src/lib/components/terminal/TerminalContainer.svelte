@@ -6,20 +6,20 @@
 	import InvisibleButton from '$lib/components/fragments/InvisibleButton.svelte';
 	import { fly } from 'svelte/transition';
 	import TerminalInfo from '$lib/components/terminal/TerminalInfo.svelte';
-		import { ActionStatus } from '$lib/types/Action';
-		import TerminalButtons from '$lib/components/terminal/TerminalButtons.svelte';
+	import { ActionStatus } from '$lib/types/Action';
+	import TerminalButtons from '$lib/components/terminal/TerminalButtons.svelte';
 
 	type Props = {
 		content: string;
 		id: string;
-	}
+	};
 
 	const xterm = new XTerm();
 	let termObject: HTMLDivElement;
 
 	let { content, id }: Props = $props();
 
-	let terminal = $state<Terminal|null>(TerminalStore.getTerminal(id) ?? null);
+	let terminal = $state<Terminal | null>(TerminalStore.getTerminal(id) ?? null);
 
 	function onData(data: string) {
 		xterm.write(data);
@@ -29,19 +29,19 @@
 
 	onMount(() => {
 		xterm.options.theme = {
-			background: '#151515', // this is surface-a0, xterm doesn't support CSS variables
-		}
+			background: '#151515' // this is surface-a0, xterm doesn't support CSS variables
+		};
 		xterm.open(termObject);
-		xterm.resize(60, 12);
+		xterm.resize(80, 12);
 		xterm.write(content);
 
-		TerminalStore.subscribe(id, {onData});
+		TerminalStore.subscribe(id, { onData });
 
 		return () => {
-			TerminalStore.unsubscribe(id, {onData});
+			TerminalStore.unsubscribe(id, { onData });
 			xterm.dispose();
 		};
-	})
+	});
 
 	let show = $state(false);
 
@@ -50,61 +50,48 @@
 			terminal.DoNotDelete = show;
 		}
 
-		if(!show && terminal?.MarkedForDeletion) {
+		if (!show && terminal?.MarkedForDeletion) {
 			TerminalStore.removeTerminal(terminal.id);
 		}
-	})
+	});
 
 	let termHeight = $state(200);
-	let termWidth = $state(500);
+	let termWidth = $state(600);
 	let shortFormWidth = $state(120);
 </script>
 
 <div
 	class="aside-container"
 	class:expanded={show}
-
 	style="
 		--termHeight: {termHeight}px;
 		--termWidth: {termWidth}px;
 		--shortFormWidth: {shortFormWidth}px;
 	"
 >
-	<div class="container"
-		 transition:fly={{ delay: 200, duration: 200, x: 500 }}
-
-		 class:success={cmdStatus === ActionStatus.Success}
-		 class:pending={cmdStatus === ActionStatus.Pending}
-		 class:running={cmdStatus === ActionStatus.Running}
-		 class:failed={cmdStatus === ActionStatus.Failed}
-
-		 class:toDelete={terminal?.MarkedForDeletion}
+	<div
+		class="container"
+		transition:fly={{ delay: 200, duration: 200, x: 500 }}
+		class:success={cmdStatus === ActionStatus.Success}
+		class:pending={cmdStatus === ActionStatus.Pending}
+		class:running={cmdStatus === ActionStatus.Running}
+		class:failed={cmdStatus === ActionStatus.Failed}
+		class:toDelete={terminal?.MarkedForDeletion}
 	>
 		{#if terminal}
-			<TerminalButtons
-				bind:show={show}
-				{terminal}
-			/>
+			<TerminalButtons bind:show {terminal} />
 		{/if}
-		<div class="terminal-content"
-			class:show={show}
-		>
-			<div id="terminal"
-				 bind:this={termObject}
-				 bind:clientHeight={termHeight}
-				 bind:clientWidth={termWidth}
+		<div class="terminal-content" class:show>
+			<div
+				id="terminal"
+				bind:this={termObject}
+				bind:clientHeight={termHeight}
+				bind:clientWidth={termWidth}
 			></div>
 		</div>
-		<InvisibleButton
-			onclick={() => show = !show}
-		>
+		<InvisibleButton onclick={() => (show = !show)}>
 			{#if terminal}
-				<TerminalInfo
-					{terminal}
-					{show}
-					bind:shortFormWidth={shortFormWidth}
-					{cmdStatus}
-				/>
+				<TerminalInfo {terminal} {show} bind:shortFormWidth {cmdStatus} />
 			{/if}
 		</InvisibleButton>
 	</div>
@@ -117,21 +104,21 @@
 		position: relative;
 	}
 	.aside-container.expanded {
-        /* 1rem for padding, 4px for border */
-        width: calc(var(--termWidth) + 1rem + 4px);
+		/* 1rem for padding, 4px for border */
+		width: calc(var(--termWidth) + 1rem + 4px);
 	}
 	.container {
 		background-color: var(--surface-tonal-a10);
-        border-bottom-left-radius: 0.5rem;
+		border-bottom-left-radius: 0.5rem;
 		border-top-left-radius: 0.5rem;
 		overflow: clip;
 		border: 2px solid var(--surface-tonal-a10);
 		transition: all 0.3s ease-in-out;
-        width: max-content;
-    }
-    .container.pending {
-        border: 2px solid var(--yellow-a10);
-    }
+		width: max-content;
+	}
+	.container.pending {
+		border: 2px solid var(--yellow-a10);
+	}
 	.container.success {
 		border: 2px solid var(--green-a10);
 	}
@@ -145,13 +132,13 @@
 	}
 	.terminal-content {
 		background-color: var(--surface-a0);
-        padding: 0;
-        max-height: 0;
+		padding: 0;
+		max-height: 0;
 		overflow: hidden;
 		transition: all 0.2s ease-in-out;
 	}
 	.terminal-content.show {
-        padding: 0.5rem;
-        max-height: calc(var(--termHeight) + 1rem); /* 1rem for padding */
+		padding: 0.5rem;
+		max-height: calc(var(--termHeight) + 1rem); /* 1rem for padding */
 	}
 </style>
