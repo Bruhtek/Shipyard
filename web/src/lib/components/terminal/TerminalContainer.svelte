@@ -8,6 +8,7 @@
 	import TerminalInfo from '$lib/components/terminal/TerminalInfo.svelte';
 	import { ActionStatus } from '$lib/types/Action';
 	import TerminalButtons from '$lib/components/terminal/TerminalButtons.svelte';
+	import UserPreferencesStore from '$lib/stores/UserPreferences.svelte';
 
 	type Props = {
 		content: string;
@@ -32,7 +33,7 @@
 			background: '#151515' // this is surface-a0, xterm doesn't support CSS variables
 		};
 		xterm.open(termObject);
-		xterm.resize(80, 12);
+		xterm.resize(UserPreferencesStore.p.terminalWidth, UserPreferencesStore.p.terminalHeight);
 		xterm.write(content);
 
 		TerminalStore.subscribe(id, { onData });
@@ -43,14 +44,25 @@
 		};
 	});
 
-	let show = $state(false);
+	let show = $state(UserPreferencesStore.p.autoExpandActions);
+
+	let hasSucceded = terminal?.Status === ActionStatus.Success;
 
 	$effect(() => {
+		const success = terminal?.Status === ActionStatus.Success;
+		if (success && !hasSucceded && UserPreferencesStore.p.autoCollapseCompletedActions) {
+			show = false;
+		}
+		hasSucceded = success;
+
 		if (terminal) {
 			terminal.DoNotDelete = show;
 		}
 
-		if (!show && terminal?.MarkedForDeletion) {
+		if (
+			terminal?.MarkedForDeletion &&
+			(!show || !UserPreferencesStore.p.keepDismissedActions)
+		) {
 			TerminalStore.removeTerminal(terminal.id);
 		}
 	});
@@ -68,6 +80,14 @@
 		--termWidth: {termWidth}px;
 		--shortFormWidth: {shortFormWidth}px;
 	"
+	onscroll={(e) => {
+		e.preventDefault();
+		e.stopPropagation();
+	}}
+	onwheel={(e) => {
+		e.preventDefault();
+		e.stopPropagation();
+	}}
 >
 	<div
 		class="container"

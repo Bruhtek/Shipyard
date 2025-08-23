@@ -9,6 +9,10 @@
 	</a>
 
 	<EnvPicker />
+
+	<div class="bottom-links">
+		<a href="/preferences"> Preferences </a>
+	</div>
 </div>
 
 <style>
@@ -18,5 +22,9 @@
 		padding: 1rem;
 		position: sticky;
 		top: 0;
+	}
+	.bottom-links {
+		position: absolute;
+		bottom: 1rem;
 	}
 </style>
