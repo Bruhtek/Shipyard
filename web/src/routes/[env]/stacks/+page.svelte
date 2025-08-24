@@ -165,6 +165,8 @@
 	bind:sortedBy
 	bind:sortedDirection
 	{loading}
+	objName={(r) => r.ConfigFiles}
+	{popupActions}
 >
 	{#snippet Row(r: StackWithID)}
 		<td>{r.Name}</td>
@@ -172,15 +174,5 @@
 			<ContainerUpToDateStatus state={r.UpToDate} />
 		</td>
 		<td>{r.Status}</td>
-		<td class="set-width">
-			<PopupActionButton id={r.ID} name={r.ConfigFiles} actions={popupActions} />
-		</td>
 	{/snippet}
 </Table>
-
-<style>
-	td.set-width {
-		width: 2rem;
-		padding: 0;
-	}
-</style>

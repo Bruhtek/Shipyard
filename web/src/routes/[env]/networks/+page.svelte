@@ -10,7 +10,12 @@
 	import Table from '$lib/components/table/Table.svelte';
 	import Badge from '$lib/components/fragments/Badge.svelte';
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
-	import NetworkActionButtons from '$lib/components/table/networks/NetworkActionButtons.svelte';
+	import Trash from '~icons/ph/trash';
+	import NetworkAction from '$lib/websocket/actions/Network';
+	import { SvelteURL } from 'svelte/reactivity';
+	import { goto } from '$app/navigation';
+	import Funnel from '~icons/ph/funnel';
+	import type { ActionData } from '$lib/components/table/actionButtons/ActionData';
 
 	let networkData = $state<Network[]>([]);
 	let loading = $state(true);
@@ -118,6 +123,31 @@
 		{ label: 'Scope', sortable: true },
 		{ label: '' }
 	];
+
+	const popupActions: ActionData[] = [
+		{
+			text: 'Remove',
+			icon: Trash,
+			onClick: (id: string) => {
+				NetworkAction(EnvStore.name, 'remove', id);
+			},
+			hoverBackground: 'var(--red-a20)',
+			hoverColor: 'var(--dark-a0)'
+		},
+		{
+			text: 'View Containers',
+			icon: Funnel,
+			onClick: (id: string, name: string) => {
+				const url = new SvelteURL(window.location.href);
+				url.pathname = `/${EnvStore.name}/containers`;
+				url.searchParams.set('query', `network:${name}`);
+				goto(url.toString());
+			},
+			hoverBackground: 'var(--primary-a20)',
+			hoverColor: 'var(--dark-a0)',
+			singleOnly: true
+		}
+	];
 </script>
 
 <svelte:head>
@@ -126,7 +156,15 @@
 
 <TableHeader title="Networks" bind:query={filter} />
 
-<Table columns={tableColumns} data={sortedData} bind:sortedBy bind:sortedDirection {loading}>
+<Table
+	columns={tableColumns}
+	data={sortedData}
+	bind:sortedBy
+	bind:sortedDirection
+	{loading}
+	objName={(r) => r.Name}
+	{popupActions}
+>
 	{#snippet Row(r: Network)}
 		<td>
 			<TruncatedID id={r.ID} />
@@ -140,15 +178,5 @@
 		<td>{r.Name}</td>
 		<td>{r.Driver}</td>
 		<td>{r.Scope}</td>
-		<td class="set-width">
-			<NetworkActionButtons id={r.ID} name={r.Name} />
-		</td>
 	{/snippet}
 </Table>
-
-<style>
-	td.set-width {
-		width: 2rem;
-		padding: 0;
-	}
-</style>

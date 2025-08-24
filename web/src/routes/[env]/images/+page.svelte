@@ -6,12 +6,15 @@
 	import TruncatedID from '$lib/components/table/TruncatedID.svelte';
 	import { type Image, TImageResponse } from '$lib/types/docker/Image';
 	import HumanReadableSize from '$lib/components/table/HumanReadableSize.svelte';
-	import ImageActionButtons from '$lib/components/table/image/ImageActionButtons.svelte';
 	import Badge from '$lib/components/fragments/Badge.svelte';
 	import TableHeader from '$lib/components/table/TableHeader.svelte';
 	import { DATA_FETCHING_INTERVAL } from '$lib/consts';
 	import { sortDataByKey } from '$lib/utils/displayUtils';
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
+	import type { ActionData } from '$lib/components/table/actionButtons/ActionData';
+	import ArrowLineDown from '~icons/ph/arrow-line-down';
+	import ImageAction from '$lib/websocket/actions/Image';
+	import Trash from '~icons/ph/trash';
 
 	let imageData = $state<Image[]>([]);
 	let loading = $state(true);
@@ -87,6 +90,27 @@
 		{ label: 'Size', sortable: true },
 		{ label: '' }
 	];
+
+	const popupActions: ActionData[] = [
+		{
+			text: 'Update',
+			icon: ArrowLineDown,
+			onClick: (id: string, name: string) => {
+				ImageAction(EnvStore.name, 'pull', name);
+			},
+			hoverBackground: 'var(--primary-a20)',
+			hoverColor: 'var(--light-a0)'
+		},
+		{
+			text: 'Remove',
+			icon: Trash,
+			onClick: (id: string) => {
+				ImageAction(EnvStore.name, 'rm', id);
+			},
+			hoverBackground: 'var(--red-a20)',
+			hoverColor: 'var(--dark-a0)'
+		}
+	];
 </script>
 
 <svelte:head>
@@ -95,7 +119,15 @@
 
 <TableHeader title="Images" bind:query={filter} />
 
-<Table columns={tableColumns} data={sortedData} bind:sortedBy bind:sortedDirection {loading}>
+<Table
+	columns={tableColumns}
+	data={sortedData}
+	bind:sortedBy
+	bind:sortedDirection
+	{loading}
+	objName={(r) => r.Repository + ':' + r.Tag}
+	{popupActions}
+>
 	{#snippet Row(r: Image)}
 		<td>
 			<TruncatedID id={r.ID} />
@@ -110,18 +142,11 @@
 		<td class="align-right">
 			<HumanReadableSize size={r.Size} />
 		</td>
-		<td class="set-width">
-			<ImageActionButtons id={r.ID} repo={r.Repository} tag={r.Tag} />
-		</td>
 	{/snippet}
 </Table>
 
 <style>
 	.align-right {
 		text-align: right;
-	}
-	td.set-width {
-		width: 2rem;
-		padding: 0;
 	}
 </style>

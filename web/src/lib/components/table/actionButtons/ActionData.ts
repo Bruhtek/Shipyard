@@ -7,4 +7,5 @@ export type ActionData = {
 	icon: Component;
 	onClick: (id: string, name: string) => void;
 	disabled?: boolean;
+	singleOnly?: boolean;
 };

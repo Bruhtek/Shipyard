@@ -4,6 +4,9 @@
 	import SortingButton from '$lib/components/table/SortingButton.svelte';
 	import Shadow from '$lib/components/fragments/Shadow.svelte';
 	import FilterPopup from '$lib/components/table/FilterPopup.svelte';
+	import PopupActionMultiButton from '$lib/components/table/actionButtons/PopupActionMultiButton.svelte';
+	import type { ActionData } from '$lib/components/table/actionButtons/ActionData';
+	import PopupActionButton from '$lib/components/table/actionButtons/PopupActionButton.svelte';
 
 	type Props = {
 		columns: TableColumn[];
@@ -13,6 +16,8 @@
 		loading?: boolean;
 		filter?: object;
 		Row: Snippet<[T]>;
+		objName: (obj: T) => string;
+		popupActions: ActionData[];
 	};
 
 	let {
@@ -22,10 +27,22 @@
 		sortedDirection = $bindable('asc'),
 		filter = $bindable({}),
 		Row,
-		loading = false
+		loading = false,
+		objName = (obj: T) => obj.ID, // by default, use ID
+		popupActions
 	}: Props = $props();
 
 	let selected = $state<string[]>([]);
+	let selectedNames = $state<string[]>([]);
+
+	function clearSelection() {
+		selected = [];
+		selectedNames = [];
+	}
+	function selectAll() {
+		selected = data.map((d) => d.ID);
+		selectedNames = data.map((d) => objName(d));
+	}
 </script>
 
 <table class="table">
@@ -68,14 +85,25 @@
 							onchange={() => {
 								if (selected.includes(rowData.ID)) {
 									selected = selected.filter((id) => id !== rowData.ID);
+									selectedNames = selectedNames.filter(
+										(name) => name !== objName(rowData)
+									);
 								} else {
 									selected = [...selected, rowData.ID];
+									selectedNames = [...selectedNames, objName(rowData)];
 								}
 							}}
 						/>
 					</label>
 				</td>
 				{@render Row(rowData)}
+				<td class="popup-actions">
+					<PopupActionButton
+						id={rowData.ID}
+						name={objName(rowData)}
+						actions={popupActions}
+					/>
+				</td>
 			</tr>
 		{/each}
 		{#if data.length === 0 && loading}
@@ -95,6 +123,16 @@
 	</tbody>
 </table>
 
+{#if selected.length > 0}
+	<PopupActionMultiButton
+		actions={popupActions}
+		ids={selected}
+		names={selectedNames}
+		clear={clearSelection}
+		{selectAll}
+	/>
+{/if}
+
 {#if data.length === 0 && !loading}
 	<div class="no-data">
 		<p>Empty</p>
@@ -112,6 +150,11 @@
 	.table {
 		width: 100%;
 		border-collapse: collapse;
+	}
+	.thead {
+		position: sticky;
+		top: 3.5rem;
+		z-index: 10;
 	}
 	.thead th:first-child {
 		border-top-left-radius: var(--border-radius);
@@ -169,5 +212,10 @@
 		align-items: center;
 		margin: -10px;
 		padding: 10px;
+	}
+
+	td.popup-actions {
+		width: 2rem;
+		padding: 0;
 	}
 </style>

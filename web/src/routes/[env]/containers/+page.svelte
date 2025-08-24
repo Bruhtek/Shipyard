@@ -19,6 +19,7 @@
 	import ArrowsClockwise from '~icons/ph/arrows-clockwise';
 	import Stop from '~icons/ph/stop';
 	import Trash from '~icons/ph/trash';
+	import PopupActionMultiButton from '$lib/components/table/actionButtons/PopupActionMultiButton.svelte';
 
 	let containerData = $state<Container[]>([]);
 	let loading = $state(true);
@@ -163,6 +164,8 @@
 	bind:sortedBy
 	bind:sortedDirection
 	{loading}
+	objName={(r) => r.Name}
+	{popupActions}
 >
 	{#snippet Row(r: Container)}
 		<td>
@@ -178,15 +181,5 @@
 		<td>
 			<ContainerState state={r.State} />
 		</td>
-		<td class="set-width">
-			<PopupActionButton id={r.ID} name={r.Name} actions={popupActions} />
-		</td>
 	{/snippet}
 </Table>
-
-<style>
-	td.set-width {
-		width: 2rem;
-		padding: 0;
-	}
-</style>

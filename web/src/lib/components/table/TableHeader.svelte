@@ -21,5 +21,10 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 0.5rem 1rem;
+		position: sticky;
+		height: 3.5rem;
+		top: 0;
+		z-index: 20;
+		background-color: var(--surface-tonal-a0);
 	}
 </style>
