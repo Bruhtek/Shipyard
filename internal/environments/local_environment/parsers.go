@@ -45,8 +45,15 @@ func parseLabels(labelsStr string) (map[string]string, error) {
 					return make(map[string]string), errors.New("invalid label format without key")
 				}
 			} else {
-				log.Error().Str("label", label).Msg("Invalid label format")
-				return make(map[string]string), errors.New("invalid label format")
+				// assume, that subsequent = signs are part of the value
+				// This is a workaround for labels that might not be formatted correctly
+				if len(labelSplit) > 2 {
+					val := strings.Join(labelSplit[1:], "=")
+					labels[labelSplit[0]] = val
+				} else {
+					log.Error().Str("label", label).Msg("Invalid label format")
+					return make(map[string]string), errors.New("invalid label format")
+				}
 			}
 		}
 	} else {
