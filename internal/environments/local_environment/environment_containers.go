@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -93,6 +94,12 @@ func (e *LocalEnvironment) ScanContainers() {
 }
 
 func (e *LocalEnvironment) checkContainerUpdateStatus(container *docker.Container) {
+	if os.Getenv("ENV") != "production" {
+		// skip update checks in non-production environments - this is to avoid hitting rate limits during development and testing
+		container.UpToDate = docker.Unknown
+		return
+	}
+
 	// only apply the rate-limit for docker hub, since other registries are less likely to have rate limits
 	// either if it starts with docker.io/ or has no registry specified (docker hub default)
 	if (strings.HasPrefix(container.Image, "docker.io/") ||
