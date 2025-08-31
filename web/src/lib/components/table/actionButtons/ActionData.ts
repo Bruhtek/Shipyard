@@ -6,6 +6,7 @@ export type ActionData = {
 	text: string;
 	icon: Component;
 	onClick: (id: string, name: string) => void;
+	onMultiClick?: (ids: string[], names: string[]) => void;
 	disabled?: boolean;
 	singleOnly?: boolean;
 };

@@ -2,13 +2,15 @@ import WSDataStore, { type WSPayload } from '$lib/websocket/MessageHandler.svelt
 
 const ALLOWED_ACTIONS = ['rm', 'pull'];
 
-const ImageAction = (environment: string, action: string, objectId: string) => {
-	if (!environment || !action || !objectId) {
+const ImageAction = (environment: string, action: string, ...objectIds: string[]) => {
+	if (!environment || !action || !objectIds) {
 		throw new Error('Invalid parameters');
 	}
 	if (!ALLOWED_ACTIONS.includes(action)) {
 		throw new Error('Invalid action');
 	}
+
+	const objectId = objectIds.join(',');
 
 	const payload: WSPayload = {
 		Action: action,

@@ -107,6 +107,7 @@
 			onClick: (id: string) => {
 				ImageAction(EnvStore.name, 'rm', id);
 			},
+			onMultiClick: (ids) => ImageAction(EnvStore.name, 'rm', ...ids),
 			hoverBackground: 'var(--red-a20)',
 			hoverColor: 'var(--dark-a0)'
 		}

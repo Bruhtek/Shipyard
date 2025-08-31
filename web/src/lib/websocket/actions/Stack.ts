@@ -1,6 +1,6 @@
 import WSDataStore, { type WSPayload } from '$lib/websocket/MessageHandler.svelte';
 
-const ALLOWED_ACTIONS = ['up', 'stop', 'down', 'restart', 'pull'];
+const ALLOWED_ACTIONS = ['up', 'stop', 'down', 'restart', 'pull', 'update'];
 
 const StackAction = (environment: string, action: string, objectId: string) => {
 	if (!environment || !action || !objectId) {

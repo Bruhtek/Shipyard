@@ -4,15 +4,17 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"github.com/creack/pty"
-	"github.com/rs/zerolog/log"
 	"io"
 	"os/exec"
 	"strings"
+
+	"github.com/creack/pty"
+	"github.com/rs/zerolog/log"
 )
 
 type Runner struct {
 	Command                 []string
+	nextCommands            [][]string
 	Ctx                     context.Context
 	CancelFunc              context.CancelFunc
 	OutputFn                func(string)
@@ -38,6 +40,25 @@ func (r *Runner) Run() {
 			r.OutputFn("\r\n\nError running command\r\n")
 		}
 	}()
+	allCommands := make([][]string, 0)
+	allCommands = append(allCommands, make([]string, 0))
+	for _, cmdArg := range r.Command {
+		if cmdArg == "&&" {
+			allCommands = append(allCommands, make([]string, 0))
+		} else {
+			currIndex := len(allCommands) - 1
+			allCommands[currIndex] = append(allCommands[currIndex], cmdArg)
+		}
+	}
+	r.Command = allCommands[0]
+	if len(allCommands) > 1 {
+		log.Debug().
+			Strs("first", r.Command).
+			Strs("next", allCommands[1]).
+			Msg("Running an action with multiple commands")
+		r.nextCommands = allCommands[1:]
+	}
+
 	cmd := exec.CommandContext(r.Ctx, r.Command[0], r.Command[1:]...)
 
 	r.OutputMetaFn(Pending)
@@ -54,6 +75,24 @@ func (r *Runner) Run() {
 	go streamOutput(f, r.OutputFn)
 
 	if err := cmd.Wait(); err == nil {
+		if len(r.nextCommands) > 0 {
+			r.Command = r.nextCommands[0]
+			if len(r.nextCommands) > 1 {
+				r.nextCommands = r.nextCommands[1:]
+			} else {
+				r.nextCommands = make([][]string, 0)
+			}
+
+			toBroadcast := "\r\n\n\nProceeding to next command in chain\r\n\n"
+			r.OutputFn(toBroadcast)
+
+			log.Debug().
+				Strs("next", r.Command).
+				Msg("Proceeding to next command in chain")
+			go r.Run()
+			return
+		}
+
 		toBroadcast := "\r\n\n\nCommand finished\r\n"
 		r.OutputFn(toBroadcast)
 

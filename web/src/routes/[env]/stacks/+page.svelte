@@ -9,13 +9,13 @@
 	import TerminalStore from '$lib/terminal/TerminalStore.svelte';
 	import { type StackWithID, TStackResponse } from '$lib/types/docker/Stack';
 	import ContainerUpToDateStatus from '$lib/components/table/container/ContainerUpToDateStatus.svelte';
-	import PopupActionButton from '$lib/components/table/actionButtons/PopupActionButton.svelte';
 	import type { ActionData } from '$lib/components/table/actionButtons/ActionData';
 	import ArrowFatUp from '~icons/ph/arrow-fat-up';
 	import Stop from '~icons/ph/stop';
 	import ArrowFatDown from '~icons/ph/arrow-fat-down';
 	import ArrowsClockwise from '~icons/ph/arrows-clockwise';
 	import CloudArrowDown from '~icons/ph/cloud-arrow-down';
+	import BoxArrowDown from '~icons/ph/box-arrow-down';
 	import StackAction from '$lib/websocket/actions/Stack';
 
 	let stackData = $state<StackWithID[]>([]);
@@ -114,15 +114,6 @@
 			hoverColor: 'var(--dark-a0)'
 		},
 		{
-			text: 'Stop',
-			icon: Stop,
-			onClick: (id: string, name: string) => {
-				StackAction(EnvStore.name, 'stop', name);
-			},
-			hoverBackground: 'var(--red-a20)',
-			hoverColor: 'var(--dark-a0)'
-		},
-		{
 			text: 'Down',
 			icon: ArrowFatDown,
 			onClick: (id: string, name: string) => {
@@ -142,9 +133,18 @@
 		},
 		{
 			text: 'Pull',
-			icon: CloudArrowDown,
+			icon: BoxArrowDown,
 			onClick: (id: string, name: string) => {
 				StackAction(EnvStore.name, 'pull', name);
+			},
+			hoverBackground: 'var(--primary-a20)',
+			hoverColor: 'var(--dark-a0)'
+		},
+		{
+			text: 'Update',
+			icon: CloudArrowDown,
+			onClick: (id: string, name: string) => {
+				StackAction(EnvStore.name, 'update', name);
 			},
 			hoverBackground: 'var(--primary-a20)',
 			hoverColor: 'var(--dark-a0)'

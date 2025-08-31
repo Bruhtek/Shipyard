@@ -15,8 +15,16 @@
 
 	let { actions, ids, names, clear, selectAll }: Props = $props();
 
-	function handleClick(callback: ActionData['onClick']) {
+	function handleClick(
+		callback: ActionData['onClick'],
+		multiCallback: ActionData['onMultiClick']
+	) {
 		if (!EnvStore.name) {
+			return;
+		}
+		if (multiCallback && ids.length > 1) {
+			multiCallback(ids, names);
+			clear();
 			return;
 		}
 		for (let i = 0; i < ids.length; i++) {
@@ -48,7 +56,7 @@
 			<PrettyButton
 				hoverBackground={action.hoverBackground}
 				hoverColor={action.hoverColor}
-				onclick={() => handleClick(action.onClick)}
+				onclick={() => handleClick(action.onClick, action.onMultiClick)}
 			>
 				<div class="icon-holder">
 					<action.icon width="1.2rem" height="1.2rem" />

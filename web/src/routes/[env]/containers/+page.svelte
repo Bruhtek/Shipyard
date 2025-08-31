@@ -124,6 +124,7 @@
 			hoverBackground: 'var(--green-a20)',
 			hoverColor: 'var(--dark-a0)',
 			onClick: (id, name) => ContainerAction(EnvStore.name, 'start', name),
+			onMultiClick: (ids, names) => ContainerAction(EnvStore.name, 'start', ...names),
 			text: 'Start',
 			icon: Play
 		},
@@ -131,6 +132,7 @@
 			hoverBackground: 'var(--yellow-a20)',
 			hoverColor: 'var(--dark-a0)',
 			onClick: (id, name) => ContainerAction(EnvStore.name, 'restart', name),
+			onMultiClick: (ids, names) => ContainerAction(EnvStore.name, 'restart', ...names),
 			text: 'Restart',
 			icon: ArrowsClockwise
 		},
@@ -138,6 +140,7 @@
 			hoverBackground: 'var(--red-a20)',
 			hoverColor: 'var(--dark-a0)',
 			onClick: (id, name) => ContainerAction(EnvStore.name, 'stop', name),
+			onMultiClick: (ids, names) => ContainerAction(EnvStore.name, 'stop', ...names),
 			text: 'Stop',
 			icon: Stop
 		},
@@ -145,6 +148,7 @@
 			hoverBackground: 'var(--red-a20)',
 			hoverColor: 'var(--dark-a0)',
 			onClick: (id, name) => ContainerAction(EnvStore.name, 'remove', name),
+			onMultiClick: (ids, names) => ContainerAction(EnvStore.name, 'remove', ...names),
 			text: 'Delete',
 			icon: Trash
 		}

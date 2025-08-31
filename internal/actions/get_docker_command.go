@@ -3,7 +3,7 @@ package actions
 import "strings"
 
 func GetDockerCommand(object string, action string, objectId string) []string {
-	var empty = []string{}
+	var empty []string
 	var base = []string{"docker"}
 
 	var ids = strings.Split(objectId, ",")
@@ -31,10 +31,16 @@ func GetDockerCommand(object string, action string, objectId string) []string {
 			return empty
 		}
 	case "stack":
-		permittedActions := []string{"up", "stop", "down", "restart", "pull"}
+		permittedActions := []string{"up", "stop", "down", "restart", "pull", "update"}
 		permittedActionsJoined := strings.Join(permittedActions, ",")
 		if !strings.Contains(permittedActionsJoined, action) {
 			return empty
+		}
+
+		if action == "update" {
+			first := GetDockerCommand(object, "pull", objectId)
+			second := GetDockerCommand(object, "up", objectId)
+			return append(append(first, "&&"), second...)
 		}
 
 		base = append(base, "compose")

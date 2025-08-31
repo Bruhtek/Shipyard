@@ -131,6 +131,9 @@
 			onClick: (id: string) => {
 				NetworkAction(EnvStore.name, 'remove', id);
 			},
+			onMultiClick: (ids) => {
+				NetworkAction(EnvStore.name, 'remove', ...ids);
+			},
 			hoverBackground: 'var(--red-a20)',
 			hoverColor: 'var(--dark-a0)'
 		},
